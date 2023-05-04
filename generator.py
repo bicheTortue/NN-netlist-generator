@@ -3,12 +3,20 @@
 import argparse
 import sys
 from itertools import count
+ nmos="nch"
+ pmos="pch"
 
 def getResId(_resCount=count()):
-    return next(_resCount)
+    return str(next(_resCount))
+
+def getMOSId(_MOSCount=count()):
+    return str(next(_MOSCount))
+
+def getOpAmpId(_count=count()):
+    return "OpAmp" + str(next(_count))
 
 def getNetId(_netCount=count()):
-    return next(_netCount)
+    return "net"+ str(next(_netCount))
 
 # Defining the different lines/modules
 def header(module_name):
@@ -41,20 +49,40 @@ def memcell(name, inVal, enableIn, enableOut, out):
     out.write("X"+ name + " " + enableIn + " "  + enableOut + " " + inVal + " " + out + "opAmp\n")
 
 def genMainXBar(nbIn,nbHid,nbOut):
-    for i in range(nbOut):
-        posWeight = str(getNetId())
-        negWeight = str(getNetId())
+    posCurOut = getNetId() # Because common, bring in to make parallel
+    negCurOut = getNetId() 
+    for i in range(nbOut): # Add another inner loop for both serial and parallel
+        posWeight = getNetId()
+        negWeight = getNetId()
         # Setting the input weights
         for j in range(nbIn):
-            resistor(str(getResId()),"netIn"+str(j), posWeight, 100) # TODO : be able to choose between one or two opAmp
-            resistor(str(getResId()),"netIn"+str(j), negWeight,100)
+            resistor(getResId(),"netIn"+str(j), posWeight, 100) # TODO : be able to choose between one or two opAmp
+            resistor(getResId(),"netIn"+str(j), negWeight,100)
         # Setting the hidden weights
         for j in range(nbHid):
-            resistor(str(getResId()),"netHid"+str(j), posWeight,10)
-            resistor(str(getResId()),"netHid"+str(j), negWeight,10)
+            resistor(getResId(),"netHid"+str(j), posWeight,10)
+            resistor(getResId(),"netHid"+str(j), negWeight,10)
         # Setting the bias weights
-        resistor(str(getResId()),"netBias", posWeight,10)
-        resistor(str(getResId()),"netBias", negWeight,10)
+        resistor(getResId(),"netBias", posWeight,1000)
+        resistor(getResId(),"netBias", negWeight,1000)
+        # Positive line CMOS Switch
+        MOSFET(getMOSId(), nmos,posWeight, "e"+str(i), posCurOut, posCurOut)
+        MOSFET(getMOSId(), pmos,posWeight, "ne"+str(i), posCurOut, posWeight)
+        # Negative line CMOS Switch
+        MOSFET(getMOSId(), nmos,negWeight, "e"+str(i), negCurOut, negCurOut)
+        MOSFET(getMOSId(), pmos,negWeight, "ne"+str(i), negCurOut, negWeight)
+
+    tmpOp1 = getNetId()
+    # OpAmps to voltage again
+    opAmp(getOpAmpId(), "Vcm", posCurOut, tmpOp1)
+    resistor(getResId(), posCurOut, tmpOp1, "R")
+    resistor(getResId(), tmpOp1, negCurOut, "R")
+    opOut = getNetId()
+    opAmp(getOpAmpId(), "Vcm", negCurOut, opOut)
+    resistor(getResId(), negCurOut, opOut, "Rf") # TODO : Figure out how to fix Rf
+    sigmoid(
+
+    
 
 def main():
 
@@ -71,14 +99,10 @@ def main():
     # Start writing the file
     header(name) 
 
-    MOSFET("test","nch","1","2", "3","4")
-    MOSFET("test","pch","1","2", "3","4")
-    resistor("truc", "1", "2", "15000")
-
-    genMainXBar(1,4,1)
-    genMainXBar(1,4,1)
-    genMainXBar(1,4,1)
-    genMainXBar(1,4,1)
+    genMainXBar(1,4,4)
+    genMainXBar(1,4,4)
+    genMainXBar(1,4,4)
+    genMainXBar(1,4,4)
 
     # End of the file
     footer(name) 
