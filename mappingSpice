@@ -1,0 +1,10 @@
+-- Device Mapping file generated from SpiceIn GUI
+devSelect := resistor res
+	termOrder := MINUS PLUS
+
+devSelect := voltageMult voltageMult
+	termOrder := in1 in2 out
+
+devSelect := opAmp opAmp
+	termOrder := pin nin out
+

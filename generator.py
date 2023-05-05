@@ -3,17 +3,8 @@
 import argparse
 import sys
 from itertools import count
- nmos="nch"
- pmos="pch"
-
-def getResId(_resCount=count()):
-    return str(next(_resCount))
-
-def getMOSId(_MOSCount=count()):
-    return str(next(_MOSCount))
-
-def getOpAmpId(_count=count()):
-    return "OpAmp" + str(next(_count))
+nmos="nch"
+pmos="pch"
 
 def getNetId(_netCount=count()):
     return "net"+ str(next(_netCount))
@@ -25,62 +16,62 @@ def header(module_name):
 def footer(module_name):
     out.write(".ends " + module_name + "\n")
 
-def resistor(name, minus, plus, value):
+def resistor(minus, plus, value, _id=count()):
     if(type(value) == int):
         value=str(value)
-    out.write("R" + name + " " + minus + " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
 
-def MOSFET(name, tType, drain, gate, source, bulk):
-    out.write("M" + name + " " + drain + " " + gate + " " + source + " " + bulk + " " + tType + "\n")
+def MOSFET(tType, drain, gate, source, bulk, _id=count()):
+    out.write("M" + str(next(_id)) + " " + drain + " " + gate + " " + source + " " + bulk + " " + tType + "\n")
 
-def sigmoid(name, Vin, Vout, V1, V2, V3, idc, gnd, vdd):
-    out.write("X" + name + " " + V1 + " " + V2 + " " + V3 + " " + Vin + " " + Vout + " " + gnd +" " + idc +" " + vdd + "sigmoid\n")
+def sigmoid(Vin, Vout, _id=count()):
+    out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " + Vin + " " + Vout + " 0 idc vdd sigmoid\n")
 
-def tanh(name, Vin, Vout, V1, V2, V3, idc, gnd, vdd):
-    out.write("X" + name + " " + V1 + " " + V2 + " " + V3 + " " + Vin + " " + Vout + " " + gnd +" " + idc +" " + vdd + "tanh\n")
+def tanh(Vin, Vout):
+    out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " + Vin + " " + Vout + " 0 idc vdd tanh\n")
 
-def voltMult(name, in1, in2, out):
-    out.write("X"+ name + " " + in1 + " " + in2 + " " + out + "voltageMult\n")
+def voltMult(in1, in2, outPin, _id=count()):
+    out.write("XvoltMult"+ str(next(_id)) + " " + in1 + " " + in2 + " " + outPin + " voltageMult\n")
 
-def opAmp(name, pin, nin, out):
-    out.write("X"+ name + " " + nin + " " + out + " " + pin + "opAmp\n")
+def opAmp(pin, nin, outPin, _id=count()):
+    out.write("XopAmp"+ str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n")
 
-def memcell(name, inVal, enableIn, enableOut, out):
-    out.write("X"+ name + " " + enableIn + " "  + enableOut + " " + inVal + " " + out + "opAmp\n")
+def memcell(inVal, enableIn, enableOut, out, _id=count()):
+    out.write("Xmemcell"+ str(next(_id)) + " " + enableIn + " "  + enableOut + " " + inVal + " " + out + " memcell\n")
 
-def genMainXBar(nbIn,nbHid,nbOut):
+def genInputXBar(nbIn,nbHid,outNet):
     posCurOut = getNetId() # Because common, bring in to make parallel
     negCurOut = getNetId() 
-    for i in range(nbOut): # Add another inner loop for both serial and parallel
+    for i in range(nbHid): # Add another inner loop for both serial and parallel
         posWeight = getNetId()
         negWeight = getNetId()
         # Setting the input weights
         for j in range(nbIn):
-            resistor(getResId(),"netIn"+str(j), posWeight, 100) # TODO : be able to choose between one or two opAmp
-            resistor(getResId(),"netIn"+str(j), negWeight,100)
+            resistor("netIn"+str(j), posWeight, 100) # TODO : be able to choose between one or two opAmp
+            resistor("netIn"+str(j), negWeight,100) # TODO : Add weights calculations
         # Setting the hidden weights
         for j in range(nbHid):
-            resistor(getResId(),"netHid"+str(j), posWeight,10)
-            resistor(getResId(),"netHid"+str(j), negWeight,10)
+            resistor("netHid"+str(j), posWeight,10)
+            resistor("netHid"+str(j), negWeight,10)
         # Setting the bias weights
-        resistor(getResId(),"netBias", posWeight,1000)
-        resistor(getResId(),"netBias", negWeight,1000)
+        resistor("netBias", posWeight,1000)
+        resistor("netBias", negWeight,1000)
         # Positive line CMOS Switch
-        MOSFET(getMOSId(), nmos,posWeight, "e"+str(i), posCurOut, posCurOut)
-        MOSFET(getMOSId(), pmos,posWeight, "ne"+str(i), posCurOut, posWeight)
+        MOSFET(nmos,posWeight, "e"+str(i), posCurOut, posCurOut)
+        MOSFET(pmos,posWeight, "ne"+str(i), posCurOut, posWeight)
         # Negative line CMOS Switch
-        MOSFET(getMOSId(), nmos,negWeight, "e"+str(i), negCurOut, negCurOut)
-        MOSFET(getMOSId(), pmos,negWeight, "ne"+str(i), negCurOut, negWeight)
+        MOSFET(nmos,negWeight, "e"+str(i), negCurOut, negCurOut)
+        MOSFET(pmos,negWeight, "ne"+str(i), negCurOut, negWeight)
 
     tmpOp1 = getNetId()
     # OpAmps to voltage again
-    opAmp(getOpAmpId(), "Vcm", posCurOut, tmpOp1)
-    resistor(getResId(), posCurOut, tmpOp1, "R")
-    resistor(getResId(), tmpOp1, negCurOut, "R")
+    opAmp("Vcm", posCurOut, tmpOp1)
+    resistor(posCurOut, tmpOp1, "R")
+    resistor(tmpOp1, negCurOut, "R")
     opOut = getNetId()
-    opAmp(getOpAmpId(), "Vcm", negCurOut, opOut)
-    resistor(getResId(), negCurOut, opOut, "Rf") # TODO : Figure out how to fix Rf
-    sigmoid(
+    opAmp("Vcm", negCurOut, opOut)
+    resistor(negCurOut, opOut, "Rf") # TODO : Figure out how to fix Rf
+    sigmoid(opOut, outNet) # Add id numbers if parallel
 
     
 
@@ -99,10 +90,10 @@ def main():
     # Start writing the file
     header(name) 
 
-    genMainXBar(1,4,4)
-    genMainXBar(1,4,4)
-    genMainXBar(1,4,4)
-    genMainXBar(1,4,4)
+    genInputXBar(1,4,"outputG")
+    genInputXBar(1,4,"inputG")
+    genInputXBar(1,4,"cellStateG")
+    genInputXBar(1,4,"forgetG")
 
     # End of the file
     footer(name) 
