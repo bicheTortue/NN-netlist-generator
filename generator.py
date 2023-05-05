@@ -25,10 +25,10 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
     out.write("M" + str(next(_id)) + " " + drain + " " + gate + " " + source + " " + bulk + " " + tType + "\n")
 
 def sigmoid(Vin, Vout, _id=count()):
-    out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " + Vin + " " + Vout + " 0 idc vdd sigmoid\n")
+    out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " + Vin + " " + Vout + " 0 idc vdd! sigmoid\n")
 
 def tanh(Vin, Vout):
-    out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " + Vin + " " + Vout + " 0 idc vdd tanh\n")
+    out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " + Vin + " " + Vout + " 0 idc vdd! tanh\n")
 
 def voltMult(in1, in2, outPin, _id=count()):
     out.write("XvoltMult"+ str(next(_id)) + " " + in1 + " " + in2 + " " + outPin + " voltageMult\n")
@@ -36,10 +36,11 @@ def voltMult(in1, in2, outPin, _id=count()):
 def opAmp(pin, nin, outPin, _id=count()):
     out.write("XopAmp"+ str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n")
 
-def memcell(inVal, enableIn, enableOut, out, _id=count()):
-    out.write("Xmemcell"+ str(next(_id)) + " " + enableIn + " "  + enableOut + " " + inVal + " " + out + " memcell\n")
+def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
+    out.write("Xmemcell"+ str(next(_id)) + " " + enableIn + " "  + enableOut + " " + inPin + " " + outPin + " memcell\n")
 
-def genInputXBar(nbIn,nbHid,outNet):
+# Generate the whole neural network with activation function
+def genInputXBar(nbIn,nbHid,outNet): # NOTE : Might just have to change nbHid=1 to parallelize
     posCurOut = getNetId() # Because common, bring in to make parallel
     negCurOut = getNetId() 
     for i in range(nbHid): # Add another inner loop for both serial and parallel
@@ -73,6 +74,29 @@ def genInputXBar(nbIn,nbHid,outNet):
     resistor(negCurOut, opOut, "Rf") # TODO : Figure out how to fix Rf
     sigmoid(opOut, outNet) # Add id numbers if parallel
 
+def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+    # Multiplication of C and input
+    tmpNet = getNetId()
+    voltMult(inputNet,cellStateNet,tmpNet)
+    adderNet = getNetId()
+    resistor(tmpNet, adderNet, "R1")
+    
+    # Multiplication with old cell state
+    tmpNet = getNetId()
+    oldCellState = getNetId()
+    voltMult(forgetG, oldCellState, tmpNet)
+    resistor(tmpNet, adderNet, "R1")
+
+    # opAmp adder
+    postAddNet = getNetId()
+    opAmp("Vcm", adderNet, postAddNet)
+    resistor(adderNet, postAddNet, "R2")
+
+    # Memory of the cell state
+    for i in range(nbSerial):
+        memcell(postAddNet, oldCellState, # finish this
+    
+    
     
 
 def main():
