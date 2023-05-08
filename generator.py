@@ -76,7 +76,45 @@ def genXBar(lIn, serialSize):
     resistor(negCurOut, netOut, "Rf") # TODO : Figure out how to fix Rf
     return netOut
 
-def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+def genPointWiseVanilla(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+    # Multiplication of C and input
+    tmpNet = getNetId()
+    voltMult(inputNet,cellStateNet,tmpNet)
+    adderNet = getNetId()
+    resistor(tmpNet, adderNet, "R1")
+    
+    # Multiplication with old cell state
+    tmpNet = getNetId()
+    oldCellState = "cellStateOld"
+    voltMult(forgetNet, oldCellState, tmpNet)
+    resistor(tmpNet, adderNet, "R1")
+
+    # opAmp adder
+    postAddNet = "cellStateCur"
+    opAmp("Vcm", adderNet, postAddNet)
+    resistor(adderNet, postAddNet, "R2")
+
+    # Memory of the cell state
+    for i in range(nbSerial):
+        memcell(postAddNet, oldCellState, "m" + str(i)+ "p2", "m" + str(i)+ "p1")
+
+    # tanh activation function
+    tmpNet = getNetId()
+    tanh(adderNet, tmpNet)
+
+    # Multiplication of last result and output gate
+    tmpNet2 = getNetId()
+    voltMult(outputNet, tmpNet, tmpNet2)
+
+    # Multiplication by 10
+    tmpNet = getNetId()
+    resistor(tmpNet2, tmpNet, "R3")
+    hidNet = getNetId()
+    opAmp("Vcm", tmpNet, hidNet)
+    resistor(tmpNet, hidNet, "R4")
+    return hidNet
+
+def genPointWiseNP(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet,cellStateNet,tmpNet)
@@ -120,6 +158,7 @@ def main():
     parser.add_argument("-o", "--output", nargs='?', type=argparse.FileType("w"), default=sys.stdout, help="Specify an output file. The name of the file before '.' will be the name of the netlist.")
 
     #tmp # will be set by parameters
+    isVanilla =True 
     nbInput=1
     nbHidden=4
     nbPred=1
@@ -150,19 +189,25 @@ def main():
         cellStateNet = "cellStateG" + str(i)
         forgetNet = "forgetG" + str(i)
         # Generate part of output gate
+        if isVanilla : listIn.append("cellStateCur")
         tmpNet = genXBar(listIn, serialSize)
         sigmoid(tmpNet, outputNet)
+        if isVanilla : listIn.pop()
         # Generate part of input gate
+        if isVanilla : listIn.append("cellStateOld")
         tmpNet = genXBar(listIn, serialSize)
         sigmoid(tmpNet, inputNet)
+        if isVanilla : listIn.pop()
         # Generate part of cell state gate
         tmpNet = genXBar(listIn, serialSize)
         tanh(tmpNet, cellStateNet)
         # Generate part of forget gate
+        if isVanilla : listIn.append("cellStateOld")
         tmpNet = genXBar(listIn, serialSize)
         sigmoid(tmpNet, forgetNet)
+        if isVanilla : listIn.pop()
 
-        hiddenStateNet = genPointWise(outputNet, inputNet, cellStateNet, forgetNet, serialSize)
+        hiddenStateNet = genPointWiseVanilla(outputNet, inputNet, cellStateNet, forgetNet, serialSize)
 
         # Memory cells for prediction NN
         # Memory cells for feedback
