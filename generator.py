@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import numpy as np
 from itertools import count
 nmos="nch"
 pmos="pch"
@@ -39,40 +40,39 @@ def opAmp(pin, nin, outPin, _id=count()):
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
     out.write("Xmemcell"+ str(next(_id)) + " " + enableIn + " "  + enableOut + " " + inPin + " " + outPin + " memcell\n")
 
-# Generate the whole neural network with activation function
-def genInputXBar(nbIn,nbHid,outNet): # NOTE : Might just have to change nbHid=1 to parallelize
+
+def genXBar(lIn, netOut, serialSize):
     posCurOut = getNetId() # Because common, bring in to make parallel
     negCurOut = getNetId() 
-    for i in range(nbHid): # Add another inner loop for both serial and parallel
-        posWeight = getNetId()
-        negWeight = getNetId()
+    for i in range(serialSize):
+        if(serialSize==1):
+            posWeight=posCurOut
+            negWeight=negCurOut
+        else:
+            posWeight = getNetId()
+            negWeight = getNetId()
         # Setting the input weights
-        for j in range(nbIn):
-            resistor("netIn"+str(j), posWeight, 100) # TODO : be able to choose between one or two opAmp
-            resistor("netIn"+str(j), negWeight,100) # TODO : Add weights calculations
-        # Setting the hidden weights
-        for j in range(nbHid):
-            resistor("netHid"+str(j), posWeight,10)
-            resistor("netHid"+str(j), negWeight,10)
+        for netIn in lIn:
+            resistor(netIn, posWeight, 100) # TODO : be able to choose between one or two opAmp/Weights
+            resistor(netIn, negWeight,100) # TODO : Add weights calculations
         # Setting the bias weights
         resistor("netBias", posWeight,1000)
         resistor("netBias", negWeight,1000)
-        # Positive line CMOS Switch
-        MOSFET(nmos,posWeight, "e"+str(i), posCurOut, posCurOut)
-        MOSFET(pmos,posWeight, "ne"+str(i), posCurOut, posWeight)
-        # Negative line CMOS Switch
-        MOSFET(nmos,negWeight, "e"+str(i), negCurOut, negCurOut)
-        MOSFET(pmos,negWeight, "ne"+str(i), negCurOut, negWeight)
+        if(serialSize>1): # The CMOS switches are not necessary if the system is fully parallelized
+            # Positive line CMOS Switch
+            MOSFET(nmos,posWeight, "e"+str(i), posCurOut, posCurOut)
+            MOSFET(pmos,posWeight, "ne"+str(i), posCurOut, posWeight)
+            # Negative line CMOS Switch
+            MOSFET(nmos,negWeight, "e"+str(i), negCurOut, negCurOut)
+            MOSFET(pmos,negWeight, "ne"+str(i), negCurOut, negWeight)
 
     tmpOp1 = getNetId()
     # OpAmps to voltage again
     opAmp("Vcm", posCurOut, tmpOp1)
     resistor(posCurOut, tmpOp1, "R")
     resistor(tmpOp1, negCurOut, "R")
-    opOut = getNetId()
-    opAmp("Vcm", negCurOut, opOut)
-    resistor(negCurOut, opOut, "Rf") # TODO : Figure out how to fix Rf
-    sigmoid(opOut, outNet) # Add id numbers if parallel
+    opAmp("Vcm", negCurOut, netOut)
+    resistor(negCurOut, netOut, "Rf") # TODO : Figure out how to fix Rf
 
 def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and input
@@ -94,16 +94,19 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Memory of the cell state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, # finish this
+        memcell(postAddNet, oldCellState,) # finish this
     
-    
-    
-
 def main():
 
     parser = argparse.ArgumentParser(prog = 'Analog LSTM Generator', description = 'This program is used to generate spice netlists to be used in Cadence\'s virtuoso. It sets all the memristors values from the weights.')
     parser.add_argument("-o", "--output", nargs='?', type=argparse.FileType("w"), default=sys.stdout, help="Specify an output file. The name of the file before '.' will be the name of the netlist.")
 
+    #tmp # will be set by parameters
+    nbInput=1
+    nbHidden=4
+    serialSize=4
+    parSize=int(np.ceil(nbHidden/serialSize))
+    #tmp
 
     args = parser.parse_args()
     
@@ -113,6 +116,34 @@ def main():
     name = (out.name.split('.')[0]) 
     # Start writing the file
     header(name) 
+
+    listIn = ["netIn"+str(i) for i in range(nbInput)]
+    for i in range(nbHidden):
+        listIn.append("netHid"+str(i))
+
+    # listOut = [getNetId() for _ in range(parSize)]
+    genXBar(listIn, listOut, serialSize)
+    for i in range(parSize):
+        # Generate part of output gate
+        tmpNet = getNetId()
+        genXBar(listInput, tmpNet, serialSize)
+        sigmoid(tmpNet, "outputG"+str(i))
+        # Generate part of input gate
+        tmpNet = getNetId()
+        genXBar(listInput, tmpNet, serialSize)
+        sigmoid(tmpNet, "inputG"+str(i))
+        # Generate part of cell state gate
+        tmpNet = getNetId()
+        genXBar(listInput, tmpNet, serialSize)
+        tanh(tmpNet, "cellStateG"+str(i))
+        # Generate part of forget gate
+        tmpNet = getNetId()
+        genXBar(listInput, tmpNet, serialSize)
+        sigmoid(tmpNet, "forgetG"+str(i))
+
+
+
+
 
     genInputXBar(1,4,"outputG")
     genInputXBar(1,4,"inputG")
