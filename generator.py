@@ -143,6 +143,7 @@ def main():
     # listOut = [getNetId() for _ in range(parSize)]
     # genXBar(listIn, listOut, serialSize)
     predIn = []
+    hidIndex = iter(range(nbHidden))
     for i in range(parSize):
         outputNet = "outputG" + str(i)
         inputNet = "inputG" + str(i)
@@ -171,7 +172,7 @@ def main():
             memcell(hiddenStateNet, tmpNet, "m" + str(i)+ "p2", "predEn") # Prediction memcells
             tmpNet = getNetId()
             memcell(hiddenStateNet, tmpNet, "m" + str(i)+ "p2", "nextT") # Feedback memcells
-            memcell(tmpNet, "netHid" + str(next(range(nbHidden))), "nextT", "xbarEn") # There are 2 of them not to override the values with-in a single LSTM step
+            memcell(tmpNet, "netHid" + str(next(hidIndex)), "nextT", "xbarEn") # There are 2 of them not to override the values with-in a single LSTM step
 
     predNet = genXBar(predIn, nbPred)
     print("The prediction are outputed on ", predNet) 
