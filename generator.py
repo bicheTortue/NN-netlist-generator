@@ -28,7 +28,7 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
 def sigmoid(Vin, Vout, _id=count()):
     out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " + Vin + " " + Vout + " 0 idc vdd! sigmoid\n")
 
-def tanh(Vin, Vout):
+def tanh(Vin, Vout, _id=count()):
     out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " + Vin + " " + Vout + " 0 idc vdd! tanh\n")
 
 def voltMult(in1, in2, outPin, _id=count()):
@@ -41,7 +41,7 @@ def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
     out.write("Xmemcell"+ str(next(_id)) + " " + enableIn + " "  + enableOut + " " + inPin + " " + outPin + " memcell\n")
 
 
-def genXBar(lIn, netOut, serialSize):
+def genXBar(lIn, serialSize):
     posCurOut = getNetId() # Because common, bring in to make parallel
     negCurOut = getNetId() 
     for i in range(serialSize):
@@ -71,8 +71,10 @@ def genXBar(lIn, netOut, serialSize):
     opAmp("Vcm", posCurOut, tmpOp1)
     resistor(posCurOut, tmpOp1, "R")
     resistor(tmpOp1, negCurOut, "R")
+    netOut = getNetId()
     opAmp("Vcm", negCurOut, netOut)
     resistor(negCurOut, netOut, "Rf") # TODO : Figure out how to fix Rf
+    return netOut
 
 def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and input
@@ -84,7 +86,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication with old cell state
     tmpNet = getNetId()
     oldCellState = getNetId()
-    voltMult(forgetG, oldCellState, tmpNet)
+    voltMult(forgetNet, oldCellState, tmpNet)
     resistor(tmpNet, adderNet, "R1")
 
     # opAmp adder
@@ -94,7 +96,23 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Memory of the cell state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState,) # finish this
+        memcell(postAddNet, oldCellState, "m" + str(i)+ "p2", "m" + str(i)+ "p1")
+
+    # tanh activation function
+    tmpNet = getNetId()
+    tanh(adderNet, tmpNet)
+
+    # Multiplication of last result and output gate
+    tmpNet2 = getNetId()
+    voltMult(outputNet, tmpNet, tmpNet2)
+
+    # Multiplication by 10
+    tmpNet = getNetId()
+    resistor(tmpNet2, tmpNet, "R3")
+    hidNet = getNetId()
+    opAmp("Vcm", tmpNet, hidNet)
+    resistor(tmpNet, hidNet, "R4")
+    return hidNet
     
 def main():
 
@@ -104,8 +122,9 @@ def main():
     #tmp # will be set by parameters
     nbInput=1
     nbHidden=4
+    nbPred=1
     serialSize=4
-    parSize=int(np.ceil(nbHidden/serialSize))
+    parSize=int(np.ceil(nbHidden/serialSize)) # TODO : Add check to see if serialSize divides nbHidden
     #tmp
 
     args = parser.parse_args()
@@ -122,33 +141,40 @@ def main():
         listIn.append("netHid"+str(i))
 
     # listOut = [getNetId() for _ in range(parSize)]
-    genXBar(listIn, listOut, serialSize)
+    # genXBar(listIn, listOut, serialSize)
+    predIn = []
     for i in range(parSize):
+        outputNet = "outputG" + str(i)
+        inputNet = "inputG" + str(i)
+        cellStateNet = "cellStateG" + str(i)
+        forgetNet = "forgetG" + str(i)
         # Generate part of output gate
-        tmpNet = getNetId()
-        genXBar(listInput, tmpNet, serialSize)
-        sigmoid(tmpNet, "outputG"+str(i))
+        tmpNet = genXBar(listIn, serialSize)
+        sigmoid(tmpNet, outputNet)
         # Generate part of input gate
-        tmpNet = getNetId()
-        genXBar(listInput, tmpNet, serialSize)
-        sigmoid(tmpNet, "inputG"+str(i))
+        tmpNet = genXBar(listIn, serialSize)
+        sigmoid(tmpNet, inputNet)
         # Generate part of cell state gate
-        tmpNet = getNetId()
-        genXBar(listInput, tmpNet, serialSize)
-        tanh(tmpNet, "cellStateG"+str(i))
+        tmpNet = genXBar(listIn, serialSize)
+        tanh(tmpNet, cellStateNet)
         # Generate part of forget gate
-        tmpNet = getNetId()
-        genXBar(listInput, tmpNet, serialSize)
-        sigmoid(tmpNet, "forgetG"+str(i))
+        tmpNet = genXBar(listIn, serialSize)
+        sigmoid(tmpNet, forgetNet)
 
+        hiddenStateNet = genPointWise(outputNet, inputNet, cellStateNet, forgetNet, serialSize)
 
+        # Memory cells for prediction NN
+        # Memory cells for feedback
+        for i in range(serialSize):
+            tmpNet = getNetId()
+            predIn.append(tmpNet)
+            memcell(hiddenStateNet, tmpNet, "m" + str(i)+ "p2", "predEn") # Prediction memcells
+            tmpNet = getNetId()
+            memcell(hiddenStateNet, tmpNet, "m" + str(i)+ "p2", "nextT") # Feedback memcells
+            memcell(tmpNet, "netHid" + str(next(range(nbHidden))), "nextT", "xbarEn") # There are 2 of them not to override the values with-in a single LSTM step
 
-
-
-    genInputXBar(1,4,"outputG")
-    genInputXBar(1,4,"inputG")
-    genInputXBar(1,4,"cellStateG")
-    genInputXBar(1,4,"forgetG")
+    predNet = genXBar(predIn, nbPred)
+    print("The prediction are outputed on ", predNet) 
 
     # End of the file
     footer(name) 
