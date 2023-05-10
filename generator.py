@@ -6,12 +6,21 @@ import numpy as np
 from itertools import count
 nmos = "nch"
 pmos = "pch"
+Rmin = 10**4
+Rmax = 10**6
+Rf = (Rmax+Rmin)/2
 
 
 def getNetId(_netCount=count()):
     return "net" + str(next(_netCount))
 
-# Defining the different lines/modules
+
+def getResVal(w):
+    Rpos = (w-1+np.sqrt(w**2+1))*Rf/w
+    Rneg = 2*Rf - Rpos
+    return (Rpos, Rneg)
+
+    # Defining the different lines/modules
 
 
 def header(module_name):
@@ -37,6 +46,8 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
 def sigmoid(Vin, Vout, _id=count()):
     out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " +
               Vin + " " + Vout + " 0 idc vdd! sigmoid\n")
+    # tmpNet = getNetId()
+    # buffer(tmpNet, Vout)
 
 
 def tanh(Vin, Vout, _id=count()):
@@ -54,12 +65,17 @@ def opAmp(pin, nin, outPin, _id=count()):
               " " + outPin + " " + pin + " opAmp\n")
 
 
+def buffer(inPin, outPin, _id=count()):
+    out.write("Xbuffer" + str(next(_id)) + " " + outPin +
+              " " + outPin + " " + inPin + " opAmp\n")
+
+
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
     out.write("Xmemcell" + str(next(_id)) + " " + enableIn + " " +
               enableOut + " " + inPin + " " + outPin + " memcell\n")
 
 
-def genXBar(lIn, serialSize):
+def genXBar(lIn, serialSize, netOut=getNetId()):
     posCurOut = getNetId()  # Because common, bring in to make parallel
     negCurOut = getNetId()
     for i in range(serialSize):
@@ -90,15 +106,14 @@ def genXBar(lIn, serialSize):
     opAmp("Vcm", posCurOut, tmpOp1)
     resistor(posCurOut, tmpOp1, "R")
     resistor(tmpOp1, negCurOut, "R")
-    netOut = getNetId()
     opAmp("Vcm", negCurOut, netOut)
-    resistor(negCurOut, netOut, "Rf")  # TODO : Figure out how to fix Rf
+    resistor(negCurOut, netOut, "Rf")
     return netOut
 
 # Not usable yet, have to figure out the index thingy
 
 
-def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netOut=getNetId()):
     # Multiplication of C and forget
     tmpNet = getNetId()
     voltMult(forgetG, cellStateNet, tmpNet)
@@ -126,7 +141,7 @@ def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     return postAddNet
 
 
-def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netOut=getNetId()):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
@@ -160,7 +175,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication by 10
     tmpNet = getNetId()
     resistor(tmpNet2, tmpNet, "R3")
-    hidNet = getNetId()
+    hidNet = outNet
     opAmp("Vcm", tmpNet, hidNet)
     resistor(tmpNet, hidNet, "R4")
     return hidNet
@@ -179,7 +194,7 @@ def main():
     nbInput = 1
     nbHidden = 4
     nbPred = 1
-    serialSize = 4
+    serialSize = 2
     # TODO : Add check to see if serialSize divides nbHidden
     parSize = int(np.ceil(nbHidden/serialSize))
     # tmp
