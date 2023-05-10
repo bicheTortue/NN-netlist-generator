@@ -70,12 +70,32 @@ def buffer(inPin, outPin, _id=count()):
               " " + outPin + " " + inPin + " opAmp\n")
 
 
+def inverter(inPin, outPin, _id=count()):
+    out.write("Xinverter" + str(next(_id)) + " " + inPin +
+              " " + outPin + " inverter\n")
+
+
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
     out.write("Xmemcell" + str(next(_id)) + " " + enableIn + " " +
               enableOut + " " + inPin + " " + outPin + " memcell\n")
 
 
-def genXBar(lIn, serialSize, netOut=getNetId()):
+def vpulse(plus, minus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
+    out.write("Vpulse"+str(next(_id)) + " " + plus + " " + minus + " DC=" + str(dc) + " srcType=pulse val0=" +
+              str(val0) + " val1=" + str(val1) + " per=" + str(per) + " pw=" + str(pw) + " td=" + str(td) + "\n")
+
+
+def vdc(plus, minus, dc=0, _id=count()):
+    out.write("Vdc"+str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
+
+
+def idc(plus, minus, dc=0, _id=count()):
+    out.write("Idc"+str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
+
+
+def genXBar(lIn, serialSize):
     posCurOut = getNetId()  # Because common, bring in to make parallel
     negCurOut = getNetId()
     for i in range(serialSize):
@@ -106,6 +126,7 @@ def genXBar(lIn, serialSize, netOut=getNetId()):
     opAmp("Vcm", posCurOut, tmpOp1)
     resistor(posCurOut, tmpOp1, "R")
     resistor(tmpOp1, negCurOut, "R")
+    netOut = getNetId()
     opAmp("Vcm", negCurOut, netOut)
     resistor(negCurOut, netOut, "Rf")
     return netOut
@@ -113,7 +134,7 @@ def genXBar(lIn, serialSize, netOut=getNetId()):
 # Not usable yet, have to figure out the index thingy
 
 
-def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netOut=getNetId()):
+def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and forget
     tmpNet = getNetId()
     voltMult(forgetG, cellStateNet, tmpNet)
@@ -136,12 +157,12 @@ def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netO
         memcell(postAddNet, oldCellState, "m" +
                 str(i) + "p2", "m" + str(i) + "p1")
 
-        # voltMult(
+        # voltMult( # TODO : Finish
 
     return postAddNet
 
 
-def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netOut=getNetId()):
+def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
@@ -175,10 +196,34 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, netOut=
     # Multiplication by 10
     tmpNet = getNetId()
     resistor(tmpNet2, tmpNet, "R3")
-    hidNet = outNet
+    hidNet = getNetId()
     opAmp("Vcm", tmpNet, hidNet)
     resistor(tmpNet, hidNet, "R4")
     return hidNet
+
+
+def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in cadence
+    vdc("gnd!", "vdd!", dc="vdd")
+    vdc("gnd!", "Vcm", dc="vdd/2")
+    vdc("gnd!", "V3t", dc="V3t")
+    vdc("gnd!", "V3s", dc="V3s")
+    vdc("gnd!", "V2", dc="V2")
+    vdc("gnd!", "V1", dc="V1")
+    idc("gnd!", "idc", dc="150u")
+
+    # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
+    vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
+    vpulse("gnd!", "predEn", per="2*(T+T/20)", td="2*(T+T/20)",
+           pw="3*T/40")  # TODO : probably change pulse width
+    vpulse("gnd!", "xbarEn", per="2*(T+T/20)", td="(T+T/20)", pw="T")
+    for i in range(serialSize):
+        vpulse("gnd!", "m" + str(i) + "p1", per="(T+T/20)", td=str(i) +
+               "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
+        vpulse("gnd!", "m" + str(i) + "p2", per="(T+T/20)", td="T/"+str(2*serialSize) +
+               "+" + str(i) + "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
+        vpulse("gnd!", "e" + str(i), per="(T+T/20)", td=str(i) +
+               "*T/" + str(serialSize), pw="T/"+str(serialSize))
+        inverter("e" + str(i), "ne" + str(i))
 
 
 def main():
@@ -281,7 +326,10 @@ def main():
                 memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
 
     predNet = genXBar(predIn, nbPred)
-    print("The prediction are outputed on", predNet)
+
+    genPowerNSignals(serialSize)
+
+    print("\nThe prediction are outputed on", predNet)
 
     # End of the file
     footer(name)
