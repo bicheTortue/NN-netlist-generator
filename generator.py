@@ -86,13 +86,13 @@ def vpulse(plus, minus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()
 
 
 def vdc(plus, minus, dc=0, _id=count()):
-    out.write("Vdc"+str(next(_id)) + " " + plus + " " +
-              minus + " DC=" + str(dc) + " srcType=dc\n")
+    out.write("Vdc"+str(next(_id)) + " " + minus + " " +
+              plus + " DC=" + str(dc) + " srcType=dc\n")
 
 
 def idc(plus, minus, dc=0, _id=count()):
-    out.write("Idc"+str(next(_id)) + " " + plus + " " +
-              minus + " DC=" + str(dc) + " srcType=dc\n")
+    out.write("Idc"+str(next(_id)) + " " + minus + " " +
+              plus + " DC=" + str(dc) + " srcType=dc\n")
 
 
 def genXBar(lIn, serialSize):
