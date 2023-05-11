@@ -80,19 +80,19 @@ def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
               enableOut + " " + inPin + " " + outPin + " memcell\n")
 
 
-def vpulse(plus, minus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
+def vpulse(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
     out.write("Vpulse"+str(next(_id)) + " " + plus + " " + minus + " DC=" + str(dc) + " srcType=pulse val0=" +
               str(val0) + " val1=" + str(val1) + " per=" + str(per) + " pw=" + str(pw) + " td=" + str(td) + "\n")
 
 
-def vdc(plus, minus, dc=0, _id=count()):
-    out.write("Vdc"+str(next(_id)) + " " + minus + " " +
-              plus + " DC=" + str(dc) + " srcType=dc\n")
+def vdc(minus, plus, dc=0, _id=count()):
+    out.write("Vdc"+str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
 
 
-def idc(plus, minus, dc=0, _id=count()):
-    out.write("Idc"+str(next(_id)) + " " + minus + " " +
-              plus + " DC=" + str(dc) + " srcType=dc\n")
+def idc(minus, plus, dc=0, _id=count()):
+    out.write("Idc"+str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
 
 
 def genXBar(lIn, serialSize):
