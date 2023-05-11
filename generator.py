@@ -213,15 +213,15 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
-    vpulse("gnd!", "predEn", per="2*(T+T/20)", td="2*(T+T/20)",
+    vpulse("gnd!", "predEn", per="\"2*(T+T/20)\"", td="\"2*(T+T/20)\"",
            pw="3*T/40")  # TODO : probably change pulse width
-    vpulse("gnd!", "xbarEn", per="2*(T+T/20)", td="(T+T/20)", pw="T")
+    vpulse("gnd!", "xbarEn", per="\"2*(T+T/20)\"", td="\"(T+T/20)\"", pw="T")
     for i in range(serialSize):
-        vpulse("gnd!", "m" + str(i) + "p1", per="(T+T/20)", td=str(i) +
+        vpulse("gnd!", "m" + str(i) + "p1", per="\"(T+T/20)\"", td=str(i) +
                "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
-        vpulse("gnd!", "m" + str(i) + "p2", per="(T+T/20)", td="T/"+str(2*serialSize) +
+        vpulse("gnd!", "m" + str(i) + "p2", per="\"(T+T/20)\"", td="T/"+str(2*serialSize) +
                "+" + str(i) + "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
-        vpulse("gnd!", "e" + str(i), per="(T+T/20)", td=str(i) +
+        vpulse("gnd!", "e" + str(i), per="\"(T+T/20)\"", td=str(i) +
                "*T/" + str(serialSize), pw="T/"+str(serialSize))
         inverter("e" + str(i), "ne" + str(i))
 
