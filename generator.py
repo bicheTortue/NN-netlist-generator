@@ -20,7 +20,7 @@ def getResVal(w):
     Rneg = 2*Rf - Rpos
     return (Rpos, Rneg)
 
-    # Defining the different lines/modules
+# Defining the different lines/modules
 
 
 def header(module_name):
