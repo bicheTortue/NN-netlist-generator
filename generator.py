@@ -226,30 +226,10 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
         inverter("e" + str(i), "ne" + str(i))
 
 
-def main():
-
-    parser = argparse.ArgumentParser(
-        prog='Analog LSTM Generator', description='This program is used to generate spice netlists to be used in Cadence\'s virtuoso. It sets all the memristors values from the weights.')
-    parser.add_argument("-o", "--output", nargs='?', type=argparse.FileType("w"), default=sys.stdout,
-                        help="Specify an output file. The name of the file before '.' will be the name of the netlist.")
-
-    # tmp # will be set by parameters
-    isVanilla = True
-    isFGR = False
-    nbInput = 1
-    nbHidden = 4
-    nbPred = 1
-    serialSize = 2
-    # TODO : Add check to see if serialSize divides nbHidden
-    parSize = int(np.ceil(nbHidden/serialSize))
-    # tmp
-
-    args = parser.parse_args()
-
-    global out
-    out = args.output
-
-    name = (out.name.split('.')[0])
+def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
+    parSize = nbHidden//serialSize
+    isFGR = typeLSTM == "FGR"
+    isVanilla = typeLSTM == "Vanilla"
     # Start writing the file
     header(name)
 
@@ -334,6 +314,36 @@ def main():
     # End of the file
     footer(name)
     out.close()
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        prog='Analog LSTM Generator', description='This program is used to generate spice netlists to be used in Cadence\'s virtuoso. It sets all the memristors values from the weights.')
+    parser.add_argument("-o", "--output", nargs='?', type=argparse.FileType("w"), default=sys.stdout,
+                        help="Specify an output file. The name of the file before '.' will be the name of the netlist.")
+    parser.add_argument("type", default="NP", choices=[
+                        "NP", "Vanilla", "GRU", "FGR"], help="Choose which LSTM architecture will be generated.")
+    parser.add_argument("-nh", "--number_hidden", default=4, type=int,
+                        help="Choose the number of hidden state for the LSTM.")
+    parser.add_argument("-ni", "--number_input", default=1, type=int,
+                        help="Choose the number of input state for the LSTM.")
+    parser.add_argument("-no", "--number_output", default=1, type=int,
+                        help="Choose the number of output state for the LSTM.")
+    parser.add_argument("-ns", "--serial_size", default=4, type=int,
+                        help="Choose the amount of serial channel for the LSTM. An LSTM time step will become SERIAL_SIZE times longer. (This value has to divide NUMBER_HIDDEN)")
+
+    args = parser.parse_args()
+
+    global out
+    out = args.output
+
+    if (args.number_hidden % args.serial_size != 0):
+        print("NUMBER_HIDDEN has to be a multiple of SERIAL_SIZE.")
+        exit()
+
+    genLSTM(out.name.split('.')[0], args.number_input, args.number_hidden,
+            args.number_output, args.serial_size, args.type)
 
 
 if (__name__ == "__main__"):
