@@ -95,41 +95,45 @@ def idc(minus, plus, dc=0, _id=count()):
               minus + " DC=" + str(dc) + " srcType=dc\n")
 
 
-def genXBar(lIn, serialSize):
-    posCurOut = getNetId()  # Because common, bring in to make parallel
-    negCurOut = getNetId()
-    for i in range(serialSize):
-        if (serialSize == 1):
-            posWeight = posCurOut
-            negWeight = negCurOut
-        else:
-            posWeight = getNetId()
-            negWeight = getNetId()
-        # Setting the input weights
-        for netIn in lIn:
-            # TODO : be able to choose between one or two opAmp/Weights
-            resistor(netIn, posWeight, 100)
-            resistor(netIn, negWeight, 100)  # TODO : Add weights calculations
-        # Setting the bias weights
-        resistor("netBias", posWeight, 1000)
-        resistor("netBias", negWeight, 1000)
-        if (serialSize > 1):  # The CMOS switches are not necessary if the system is fully parallelized
-            # Positive line CMOS Switch
-            MOSFET(nmos, posWeight, "e"+str(i), posCurOut, posCurOut)
-            MOSFET(pmos, posWeight, "ne"+str(i), posCurOut, posWeight)
-            # Negative line CMOS Switch
-            MOSFET(nmos, negWeight, "e"+str(i), negCurOut, negCurOut)
-            MOSFET(pmos, negWeight, "ne"+str(i), negCurOut, negWeight)
+def genXBar(lIn, nbHidden, serialSize):
+    outNets = []
+    for _ in range(nbHidden//serialSize):
+        posCurOut = getNetId()  # Because common, bring in to make parallel
+        negCurOut = getNetId()
+        for i in range(serialSize):
+            if (serialSize == 1):
+                posWeight = posCurOut
+                negWeight = negCurOut
+            else:
+                posWeight = getNetId()
+                negWeight = getNetId()
+            # Setting the input weights
+            for netIn in lIn:
+                # TODO : be able to choose between one or two opAmp/Weights
+                resistor(netIn, posWeight, 100)
+                # TODO : Add weights calculations
+                resistor(netIn, negWeight, 100)
+            # Setting the bias weights
+            resistor("netBias", posWeight, 1000)
+            resistor("netBias", negWeight, 1000)
+            if (serialSize > 1):  # The CMOS switches are not necessary if the system is fully parallelized
+                # Positive line CMOS Switch
+                MOSFET(nmos, posWeight, "e"+str(i), posCurOut, posCurOut)
+                MOSFET(pmos, posWeight, "ne"+str(i), posCurOut, posWeight)
+                # Negative line CMOS Switch
+                MOSFET(nmos, negWeight, "e"+str(i), negCurOut, negCurOut)
+                MOSFET(pmos, negWeight, "ne"+str(i), negCurOut, negWeight)
 
-    tmpOp1 = getNetId()
-    # OpAmps to voltage again
-    opAmp("Vcm", posCurOut, tmpOp1)
-    resistor(posCurOut, tmpOp1, "R")
-    resistor(tmpOp1, negCurOut, "R")
-    netOut = getNetId()
-    opAmp("Vcm", negCurOut, netOut)
-    resistor(negCurOut, netOut, "Rf")
-    return netOut
+        tmpOp1 = getNetId()
+        # OpAmps to voltage again
+        opAmp("Vcm", posCurOut, tmpOp1)
+        resistor(posCurOut, tmpOp1, "R")
+        resistor(tmpOp1, negCurOut, "R")
+        netOut = getNetId()
+        outNets.append(netOut)
+        opAmp("Vcm", negCurOut, netOut)
+        resistor(negCurOut, netOut, "Rf")
+    return outNets
 
 # Not usable yet, have to figure out the index thingy
 
@@ -244,66 +248,67 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
 
     predIn = []
     hidIndex = iter(range(nbHidden))
-    for i in range(parSize):
-        outputNet = "outputG" + str(i)
-        inputNet = "inputG" + str(i)
-        cellStateNet = "cellStateG" + str(i)
-        forgetNet = "forgetG" + str(i)
-        # Generate part of cell state gate
-        tmpNet = genXBar(listIn, serialSize)
-        tanh(tmpNet, cellStateNet)
-        # Generate part of output gate
-        if isVanilla:
-            listIn.append("cellStateCur")
+
+    outputNet = "outputG" + str(i)
+    inputNet = "inputG" + str(i)
+    cellStateNet = "cellStateG" + str(i)
+    forgetNet = "forgetG" + str(i)
+
+    # Generate part of cell state gate
+    outputNets = genXBar(listIn, nbHidden, serialSize)
+    tanh(tmpNet, cellStateNet)
+    # Generate part of output gate
+    if isVanilla:
+        listIn.append("cellStateCur")
+    if isFGR:
+        listIn.append("cellStateOld")
+        for l in listFGR:
+            listIn.extend(l)
+    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    sigmoid(tmpNet, outputNet)
+    if isVanilla:
+        listIn.pop()
+    # Generate part of input gate
+    if isVanilla:
+        listIn.append("cellStateOld")
+    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    sigmoid(tmpNet, inputNet)
+    # Generate part of forget gate
+    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    sigmoid(tmpNet, forgetNet)
+    # It is not mandatory to clean the list
+    # if isVanilla : listIn.pop()
+    # if isFGR : listIn.pop()
+
+    hiddenStateNet = genPointWise(
+        outputNet, inputNet, cellStateNet, forgetNet, serialSize)
+
+    # Memory cells for prediction NN
+    # Memory cells for feedback
+    for i in range(serialSize):
+        curIndex = str(next(hidIndex))
+        tmpNet = getNetId()
+        predIn.append(tmpNet)
+        memcell(hiddenStateNet, tmpNet, "m" + str(i) +
+                "p2", "predEn")  # Prediction memcells
+        tmpNet = getNetId()
+        memcell(hiddenStateNet, tmpNet, "m" + str(i) +
+                "p2", "nextT")  # Feedback memcells
+        # There are 2 of them not to override the values with-in a single LSTM step
+        memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
         if isFGR:
-            listIn.append("cellStateOld")
-            for l in listFGR:
-                listIn.extend(l)
-        tmpNet = genXBar(listIn, serialSize)
-        sigmoid(tmpNet, outputNet)
-        if isVanilla:
-            listIn.pop()
-        # Generate part of input gate
-        if isVanilla:
-            listIn.append("cellStateOld")
-        tmpNet = genXBar(listIn, serialSize)
-        sigmoid(tmpNet, inputNet)
-        # Generate part of forget gate
-        tmpNet = genXBar(listIn, serialSize)
-        sigmoid(tmpNet, forgetNet)
-        # It is not mandatory to clean the list
-        # if isVanilla : listIn.pop()
-        # if isFGR : listIn.pop()
-
-        hiddenStateNet = genPointWise(
-            outputNet, inputNet, cellStateNet, forgetNet, serialSize)
-
-        # Memory cells for prediction NN
-        # Memory cells for feedback
-        for i in range(serialSize):
-            curIndex = str(next(hidIndex))
+            # For the output gate recurrence
             tmpNet = getNetId()
-            predIn.append(tmpNet)
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                    "p2", "predEn")  # Prediction memcells
+            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+            memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
+            # For the input gate recurrence
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                    "p2", "nextT")  # Feedback memcells
-            # There are 2 of them not to override the values with-in a single LSTM step
-            memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
-            if isFGR:
-                # For the output gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
-                # For the input gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
-                # For the forget gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
+            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+            memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
+            # For the forget gate recurrence
+            tmpNet = getNetId()
+            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+            memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
 
     predNet = genXBar(predIn, nbPred)
 
