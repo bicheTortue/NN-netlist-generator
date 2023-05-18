@@ -192,9 +192,9 @@ def idc(minus, plus, dc=0, _id=count()):
     )
 
 
-def genXBar(lIn, nbHidden, serialSize, weights=None):
+def genXBar(lIn, nbOutput, serialSize, weights=None):
     outNets = []
-    for _ in range(nbHidden//serialSize):
+    for _ in range(nbOutput//serialSize):
         posCurOut = getNetId()  # Because common, bring in to make parallel
         negCurOut = getNetId()
         for i in range(serialSize):
@@ -235,7 +235,7 @@ def genXBar(lIn, nbHidden, serialSize, weights=None):
 
 def genPointWiseGRU(
     outputNet, inputNet, cellStateNet, forgetNet, nbSerial
-):  # Not wrking
+):  # Not working
     # Multiplication of C and forget
     tmpNet = getNetId()
     voltMult(forgetG, cellStateNet, tmpNet)
@@ -344,12 +344,10 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
         inverter("e" + str(i), "ne" + str(i))
 
 
-def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
+def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
     parSize = nbHidden // serialSize
     isFGR = typeLSTM == "FGR"
     isVanilla = typeLSTM == "Vanilla"
-    # Start writing the file
-    header(name)
 
     listIn = ["netIn" + str(i) for i in range(nbInput)]
     for i in range(nbHidden):
@@ -363,10 +361,6 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
     predIn = []
     hidIndex = iter(range(nbHidden))
 
-    outputNet = "outputG" + str(i)
-    inputNet = "inputG" + str(i)
-    cellStateNet = "cellStateG" + str(i)
-    forgetNet = "forgetG" + str(i)
     if isFGR:
         listIn.append("cellStateOld")
         for l in listFGR:
@@ -375,17 +369,14 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
         listIn.append("cellStateOld")
     # Generate part of input gate
     inputNets = genXBar(listIn, nbHidden, serialSize)
-    sigmoid(tmpNet, inputNet)
     # Generate part of forget gate
     forgetNets = genXBar(listIn, nbHidden, serialSize)
-    sigmoid(tmpNet, forgetNet)
     if isVanilla:
         listIn.pop()
     if isFGR:
         listIn = listIn[: -(3 * nbHidden + 1)]
     # Generate part of cell state gate
-    tmpNet = genXBar(listIn, nbHidden, serialSize)
-    tanh(tmpNet, cellStateNet)
+    cellStateNets = genXBar(listIn, nbHidden, serialSize)
     # Generate part of output gate
     if isFGR:
         listIn.append("cellStateOld")
@@ -393,48 +384,56 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
             listIn.extend(l)
     if isVanilla:
         listIn.append("cellStateCur")
-    tmpNet = genXBar(listIn, nbHidden, serialSize)
-    sigmoid(tmpNet, outputNet)
+    outputNets = genXBar(listIn, nbHidden, serialSize)
 
-    hiddenStateNet = genPointWise(
-        outputNet, inputNet, cellStateNet, forgetNet, serialSize)
+    for i in range(len(inputNets)):  # Also equal to parSize
+        outputNet = "outputG" + str(i)
+        inputNet = "inputG" + str(i)
+        cellStateNet = "cellStateG" + str(i)
+        forgetNet = "forgetG" + str(i)
+        sigmoid(inputNets[i], inputNet)
+        sigmoid(forgetNets[i], forgetNet)
+        tanh(cellStateNets[i], cellStateNet)
+        sigmoid(outputNets[i], outputNet)
 
-    # Memory cells for prediction NN
-    # Memory cells for feedback
-    for i in range(serialSize):
-        curIndex = str(next(hidIndex))
-        tmpNet = getNetId()
-        predIn.append(tmpNet)
-        memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                "p2", "predEn")  # Prediction memcells
-        tmpNet = getNetId()
-        memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                "p2", "nextT")  # Feedback memcells
-        # There are 2 of them not to override the values with-in a single LSTM step
-        memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
-        if isFGR:
-            # For the output gate recurrence
+        hiddenStateNet = genPointWise(
+            outputNet, inputNet, cellStateNet, forgetNet, serialSize)
+
+        # Memory cells for prediction NN
+        # Memory cells for feedback
+        for i in range(serialSize):
+            curIndex = str(next(hidIndex))
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-            memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
-            # For the input gate recurrence
+            predIn.append(tmpNet)
+            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
+                    "p2", "predEn")  # Prediction memcells
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-            memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
-            # For the forget gate recurrence
-            tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-            memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
+            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
+                    "p2", "nextT")  # Feedback memcells
+            # There are 2 of them not to override the values with-in a single LSTM step
+            memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
+            if isFGR:
+                # For the output gate recurrence
+                tmpNet = getNetId()
+                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
+                # For the input gate recurrence
+                tmpNet = getNetId()
+                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
+                # For the forget gate recurrence
+                tmpNet = getNetId()
+                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
 
-    predNet = genXBar(predIn, nbPred)
+    return predIn
 
-    genPowerNSignals(serialSize)
 
-    print("\nThe prediction are outputed on", predNet)
+def genDense(lIn, nbOutputs, weights=None):
 
-    # End of the file
-    footer(name)
-    out.close()
+    predNet = genXBar(lIn, nbOutputs, 1, weights)
+
+    return predNet
 
 
 def main():
@@ -494,14 +493,26 @@ def main():
         print("NUMBER_HIDDEN has to be a multiple of SERIAL_SIZE.")
         exit()
 
-    genLSTM(
+    # Start writing the file
+    header(name)
+
+    hiddenNets = genLSTM(
         out.name.split(".")[0],
         args.number_input,
         args.number_hidden,
-        args.number_output,
         args.serial_size,
         args.type,
     )
+
+    genDense(genDense(hiddenNets, 2), 1)
+
+    genPowerNSignals(serialSize)
+
+    print("\nThe prediction are outputed on", predNet)
+
+    # End of the file
+    footer(name)
+    out.close()
 
 
 if __name__ == "__main__":
