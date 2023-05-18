@@ -36,8 +36,7 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) == int:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus +
-              " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -100,8 +99,7 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " +
-        outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -120,8 +118,7 @@ def buffer(inPin, outPin, _id=count()):
 
 
 def inverter(inPin, outPin, _id=count()):
-    out.write("Xinverter" + str(next(_id)) + " " +
-              inPin + " " + outPin + " inverter\n")
+    out.write("Xinverter" + str(next(_id)) + " " + inPin + " " + outPin + " inverter\n")
 
 
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
@@ -194,11 +191,11 @@ def idc(minus, plus, dc=0, _id=count()):
 
 def genXBar(lIn, nbOutput, serialSize, weights=None):
     outNets = []
-    for _ in range(nbOutput//serialSize):
+    for _ in range(nbOutput // serialSize):
         posCurOut = getNetId()  # Because common, bring in to make parallel
         negCurOut = getNetId()
         for i in range(serialSize):
-            if (serialSize == 1):
+            if serialSize == 1:
                 posWeight = posCurOut
                 negWeight = negCurOut
             else:
@@ -213,13 +210,15 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
             # Setting the bias weights
             resistor("netBias", posWeight, 1000)
             resistor("netBias", negWeight, 1000)
-            if (serialSize > 1):  # The CMOS switches are not necessary if the system is fully parallelized
+            if (
+                serialSize > 1
+            ):  # The CMOS switches are not necessary if the system is fully parallelized
                 # Positive line CMOS Switch
-                MOSFET(nmos, posWeight, "e"+str(i), posCurOut, posCurOut)
-                MOSFET(pmos, posWeight, "ne"+str(i), posCurOut, posWeight)
+                MOSFET(nmos, posWeight, "e" + str(i), posCurOut, posCurOut)
+                MOSFET(pmos, posWeight, "ne" + str(i), posCurOut, posWeight)
                 # Negative line CMOS Switch
-                MOSFET(nmos, negWeight, "e"+str(i), negCurOut, negCurOut)
-                MOSFET(pmos, negWeight, "ne"+str(i), negCurOut, negWeight)
+                MOSFET(nmos, negWeight, "e" + str(i), negCurOut, negCurOut)
+                MOSFET(pmos, negWeight, "ne" + str(i), negCurOut, negWeight)
 
         tmpOp1 = getNetId()
         # OpAmps to voltage again
@@ -255,8 +254,7 @@ def genPointWiseGRU(
 
     # Memory of the cell state/hidden state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" +
-                str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
         # voltMult( # TODO : Finish
 
@@ -283,8 +281,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Memory of the cell state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" +
-                str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -330,8 +327,7 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
             "gnd!",
             "m" + str(i) + "p2",
             per='"(T+T/20)"',
-            td="T/" + str(2 * serialSize) + "+" +
-            str(i) + "*T/" + str(serialSize),
+            td="T/" + str(2 * serialSize) + "+" + str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
         vpulse(
@@ -397,7 +393,8 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
         sigmoid(outputNets[i], outputNet)
 
         hiddenStateNet = genPointWise(
-            outputNet, inputNet, cellStateNet, forgetNet, serialSize)
+            outputNet, inputNet, cellStateNet, forgetNet, serialSize
+        )
 
         # Memory cells for prediction NN
         # Memory cells for feedback
@@ -405,11 +402,13 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
             curIndex = str(next(hidIndex))
             tmpNet = getNetId()
             predIn.append(tmpNet)
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                    "p2", "predEn")  # Prediction memcells
+            memcell(
+                hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
+            )  # Prediction memcells
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "m" + str(i) +
-                    "p2", "nextT")  # Feedback memcells
+            memcell(
+                hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT"
+            )  # Feedback memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
             if isFGR:
@@ -430,7 +429,6 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
 
 
 def genDense(lIn, nbOutputs, weights=None):
-
     predNet = genXBar(lIn, nbOutputs, 1, weights)
 
     return predNet
@@ -504,7 +502,7 @@ def main():
         args.type,
     )
 
-    genDense(genDense(hiddenNets, 2), 1)
+    predNet = genDense(genDense(hiddenNets, 2), 1)
 
     genPowerNSignals(serialSize)
 
