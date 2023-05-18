@@ -36,157 +36,65 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) == int:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus +
+              " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
-    out.write(
-        "M"
-        + str(next(_id))
-        + " "
-        + drain
-        + " "
-        + gate
-        + " "
-        + source
-        + " "
-        + bulk
-        + " "
-        + tType
-        + "\n"
-    )
+    out.write("M" + str(next(_id)) + " " + drain + " " + gate +
+              " " + source + " " + bulk + " " + tType + "\n")
 
 
 def sigmoid(Vin, Vout, _id=count()):
-    out.write(
-        "Xsig"
-        + str(next(_id))
-        + " V1 V2 V3s "
-        + Vin
-        + " "
-        + Vout
-        + " 0 idc vdd! sigmoid\n"
-    )
+    out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " +
+              Vin + " " + Vout + " 0 idc vdd! sigmoid\n")
     # tmpNet = getNetId()
     # buffer(tmpNet, Vout)
 
 
 def tanh(Vin, Vout, _id=count()):
-    out.write(
-        "Xtanh"
-        + str(next(_id))
-        + " V1 V2 V3t "
-        + Vin
-        + " "
-        + Vout
-        + " 0 idc vdd! tanh\n"
-    )
+    out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " +
+              Vin + " " + Vout + " 0 idc vdd! tanh\n")
 
 
 def voltMult(in1, in2, outPin, _id=count()):
-    out.write(
-        "XvoltMult"
-        + str(next(_id))
-        + " "
-        + in1
-        + " "
-        + in2
-        + " "
-        + outPin
-        + " voltageMult\n"
-    )
+    out.write("XvoltMult" + str(next(_id)) + " " + in1 +
+              " " + in2 + " " + outPin + " voltageMult\n")
 
 
 def opAmp(pin, nin, outPin, _id=count()):
-    out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
-    )
+    out.write("XopAmp" + str(next(_id)) + " " + nin +
+              " " + outPin + " " + pin + " opAmp\n")
 
 
 def buffer(inPin, outPin, _id=count()):
-    out.write(
-        "Xbuffer"
-        + str(next(_id))
-        + " "
-        + outPin
-        + " "
-        + outPin
-        + " "
-        + inPin
-        + " opAmp\n"
-    )
+    out.write("Xbuffer" + str(next(_id)) + " " + outPin +
+              " " + outPin + " " + inPin + " opAmp\n")
 
 
 def inverter(inPin, outPin, _id=count()):
-    out.write("Xinverter" + str(next(_id)) + " " + inPin + " " + outPin + " inverter\n")
+    out.write("Xinverter" + str(next(_id)) + " " +
+              inPin + " " + outPin + " inverter\n")
 
 
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
-    out.write(
-        "Xmemcell"
-        + str(next(_id))
-        + " "
-        + enableIn
-        + " "
-        + enableOut
-        + " "
-        + inPin
-        + " "
-        + outPin
-        + " memcell\n"
-    )
+    out.write("Xmemcell" + str(next(_id)) + " " + enableIn + " " +
+              enableOut + " " + inPin + " " + outPin + " memcell\n")
 
 
 def vpulse(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
-    out.write(
-        "Vpulse"
-        + str(next(_id))
-        + " "
-        + plus
-        + " "
-        + minus
-        + " DC="
-        + str(dc)
-        + " srcType=pulse val0="
-        + str(val0)
-        + " val1="
-        + str(val1)
-        + " per="
-        + str(per)
-        + " pw="
-        + str(pw)
-        + " td="
-        + str(td)
-        + "\n"
-    )
+    out.write("Vpulse" + str(next(_id)) + " " + plus + " " + minus + " DC=" + str(dc) + " srcType=pulse val0=" +
+              str(val0) + " val1=" + str(val1) + " per=" + str(per) + " pw=" + str(pw) + " td=" + str(td) + "\n")
 
 
 def vdc(minus, plus, dc=0, _id=count()):
-    out.write(
-        "Vdc"
-        + str(next(_id))
-        + " "
-        + plus
-        + " "
-        + minus
-        + " DC="
-        + str(dc)
-        + " srcType=dc\n"
-    )
+    out.write("Vdc" + str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
 
 
 def idc(minus, plus, dc=0, _id=count()):
-    out.write(
-        "Idc"
-        + str(next(_id))
-        + " "
-        + plus
-        + " "
-        + minus
-        + " DC="
-        + str(dc)
-        + " srcType=dc\n"
-    )
+    out.write("Idc" + str(next(_id)) + " " + plus + " " +
+              minus + " DC=" + str(dc) + " srcType=dc\n")
 
 
 def genXBar(lIn, nbOutput, serialSize, weights=None):
@@ -254,7 +162,8 @@ def genPointWiseGRU(
 
     # Memory of the cell state/hidden state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" +
+                str(i) + "p2", "m" + str(i) + "p1")
 
         # voltMult( # TODO : Finish
 
@@ -281,7 +190,8 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Memory of the cell state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" +
+                str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -327,7 +237,8 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
             "gnd!",
             "m" + str(i) + "p2",
             per='"(T+T/20)"',
-            td="T/" + str(2 * serialSize) + "+" + str(i) + "*T/" + str(serialSize),
+            td="T/" + str(2 * serialSize) + "+" +
+            str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
         vpulse(
