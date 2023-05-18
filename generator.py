@@ -4,11 +4,12 @@ import argparse
 import sys
 import numpy as np
 from itertools import count
+
 nmos = "nch"
 pmos = "pch"
 Rmin = 10**4
 Rmax = 10**6
-Rf = (Rmax+Rmin)/2
+Rf = (Rmax + Rmin) / 2
 
 
 def getNetId(_netCount=count()):
@@ -16,9 +17,10 @@ def getNetId(_netCount=count()):
 
 
 def getResVal(w):
-    Rpos = (w-1+np.sqrt(w**2+1))*Rf/w
-    Rneg = 2*Rf - Rpos
+    Rpos = (w - 1 + np.sqrt(w**2 + 1)) * Rf / w
+    Rneg = 2 * Rf - Rpos
     return (Rpos, Rneg)
+
 
 # Defining the different lines/modules
 
@@ -32,70 +34,165 @@ def footer(module_name):
 
 
 def resistor(minus, plus, value, _id=count()):
-    if (type(value) == int):
+    if type(value) == int:
         value = str(value)
     out.write("R" + str(next(_id)) + " " + minus +
               " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
-    out.write("M" + str(next(_id)) + " " + drain + " " + gate +
-              " " + source + " " + bulk + " " + tType + "\n")
+    out.write(
+        "M"
+        + str(next(_id))
+        + " "
+        + drain
+        + " "
+        + gate
+        + " "
+        + source
+        + " "
+        + bulk
+        + " "
+        + tType
+        + "\n"
+    )
 
 
 def sigmoid(Vin, Vout, _id=count()):
-    out.write("Xsig" + str(next(_id)) + " V1 V2 V3s " +
-              Vin + " " + Vout + " 0 idc vdd! sigmoid\n")
+    out.write(
+        "Xsig"
+        + str(next(_id))
+        + " V1 V2 V3s "
+        + Vin
+        + " "
+        + Vout
+        + " 0 idc vdd! sigmoid\n"
+    )
     # tmpNet = getNetId()
     # buffer(tmpNet, Vout)
 
 
 def tanh(Vin, Vout, _id=count()):
-    out.write("Xtanh" + str(next(_id)) + " V1 V2 V3t " +
-              Vin + " " + Vout + " 0 idc vdd! tanh\n")
+    out.write(
+        "Xtanh"
+        + str(next(_id))
+        + " V1 V2 V3t "
+        + Vin
+        + " "
+        + Vout
+        + " 0 idc vdd! tanh\n"
+    )
 
 
 def voltMult(in1, in2, outPin, _id=count()):
-    out.write("XvoltMult" + str(next(_id)) + " " + in1 +
-              " " + in2 + " " + outPin + " voltageMult\n")
+    out.write(
+        "XvoltMult"
+        + str(next(_id))
+        + " "
+        + in1
+        + " "
+        + in2
+        + " "
+        + outPin
+        + " voltageMult\n"
+    )
 
 
 def opAmp(pin, nin, outPin, _id=count()):
-    out.write("XopAmp" + str(next(_id)) + " " + nin +
-              " " + outPin + " " + pin + " opAmp\n")
+    out.write(
+        "XopAmp" + str(next(_id)) + " " + nin + " " +
+        outPin + " " + pin + " opAmp\n"
+    )
 
 
 def buffer(inPin, outPin, _id=count()):
-    out.write("Xbuffer" + str(next(_id)) + " " + outPin +
-              " " + outPin + " " + inPin + " opAmp\n")
+    out.write(
+        "Xbuffer"
+        + str(next(_id))
+        + " "
+        + outPin
+        + " "
+        + outPin
+        + " "
+        + inPin
+        + " opAmp\n"
+    )
 
 
 def inverter(inPin, outPin, _id=count()):
-    out.write("Xinverter" + str(next(_id)) + " " + inPin +
-              " " + outPin + " inverter\n")
+    out.write("Xinverter" + str(next(_id)) + " " +
+              inPin + " " + outPin + " inverter\n")
 
 
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
-    out.write("Xmemcell" + str(next(_id)) + " " + enableIn + " " +
-              enableOut + " " + inPin + " " + outPin + " memcell\n")
+    out.write(
+        "Xmemcell"
+        + str(next(_id))
+        + " "
+        + enableIn
+        + " "
+        + enableOut
+        + " "
+        + inPin
+        + " "
+        + outPin
+        + " memcell\n"
+    )
 
 
 def vpulse(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
-    out.write("Vpulse"+str(next(_id)) + " " + plus + " " + minus + " DC=" + str(dc) + " srcType=pulse val0=" +
-              str(val0) + " val1=" + str(val1) + " per=" + str(per) + " pw=" + str(pw) + " td=" + str(td) + "\n")
+    out.write(
+        "Vpulse"
+        + str(next(_id))
+        + " "
+        + plus
+        + " "
+        + minus
+        + " DC="
+        + str(dc)
+        + " srcType=pulse val0="
+        + str(val0)
+        + " val1="
+        + str(val1)
+        + " per="
+        + str(per)
+        + " pw="
+        + str(pw)
+        + " td="
+        + str(td)
+        + "\n"
+    )
 
 
 def vdc(minus, plus, dc=0, _id=count()):
-    out.write("Vdc"+str(next(_id)) + " " + plus + " " +
-              minus + " DC=" + str(dc) + " srcType=dc\n")
+    out.write(
+        "Vdc"
+        + str(next(_id))
+        + " "
+        + plus
+        + " "
+        + minus
+        + " DC="
+        + str(dc)
+        + " srcType=dc\n"
+    )
 
 
 def idc(minus, plus, dc=0, _id=count()):
-    out.write("Idc"+str(next(_id)) + " " + plus + " " +
-              minus + " DC=" + str(dc) + " srcType=dc\n")
+    out.write(
+        "Idc"
+        + str(next(_id))
+        + " "
+        + plus
+        + " "
+        + minus
+        + " DC="
+        + str(dc)
+        + " srcType=dc\n"
+    )
 
 
-def genXBar(lIn, nbHidden, serialSize):
+def genXBar(lIn, nbHidden, serialSize, weights=None):
     outNets = []
     for _ in range(nbHidden//serialSize):
         posCurOut = getNetId()  # Because common, bring in to make parallel
@@ -135,10 +232,10 @@ def genXBar(lIn, nbHidden, serialSize):
         resistor(negCurOut, netOut, "Rf")
     return outNets
 
-# Not usable yet, have to figure out the index thingy
 
-
-def genPointWiseGRU(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+def genPointWiseGRU(
+    outputNet, inputNet, cellStateNet, forgetNet, nbSerial
+):  # Not wrking
     # Multiplication of C and forget
     tmpNet = getNetId()
     voltMult(forgetG, cellStateNet, tmpNet)
@@ -217,34 +314,51 @@ def genPowerNSignals(serialSize):  # NOTE : Find out if should be set here or in
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
-    vpulse("gnd!", "predEn", per="\"2*(T+T/20)\"", td="\"2*(T+T/20)\"",
-           pw="3*T/40")  # TODO : probably change pulse width
-    vpulse("gnd!", "xbarEn", per="\"2*(T+T/20)\"", td="\"(T+T/20)\"", pw="T")
+    vpulse(
+        "gnd!", "predEn", per='"2*(T+T/20)"', td='"2*(T+T/20)"', pw="3*T/40"
+    )  # TODO : probably change pulse width
+    vpulse("gnd!", "xbarEn", per='"2*(T+T/20)"', td='"(T+T/20)"', pw="T")
     for i in range(serialSize):
-        vpulse("gnd!", "m" + str(i) + "p1", per="\"(T+T/20)\"", td=str(i) +
-               "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
-        vpulse("gnd!", "m" + str(i) + "p2", per="\"(T+T/20)\"", td="T/"+str(2*serialSize) +
-               "+" + str(i) + "*T/" + str(serialSize), pw="T/"+str(2*serialSize))
-        vpulse("gnd!", "e" + str(i), per="\"(T+T/20)\"", td=str(i) +
-               "*T/" + str(serialSize), pw="T/"+str(serialSize))
+        vpulse(
+            "gnd!",
+            "m" + str(i) + "p1",
+            per='"(T+T/20)"',
+            td=str(i) + "*T/" + str(serialSize),
+            pw="T/" + str(2 * serialSize),
+        )
+        vpulse(
+            "gnd!",
+            "m" + str(i) + "p2",
+            per='"(T+T/20)"',
+            td="T/" + str(2 * serialSize) + "+" +
+            str(i) + "*T/" + str(serialSize),
+            pw="T/" + str(2 * serialSize),
+        )
+        vpulse(
+            "gnd!",
+            "e" + str(i),
+            per='"(T+T/20)"',
+            td=str(i) + "*T/" + str(serialSize),
+            pw="T/" + str(serialSize),
+        )
         inverter("e" + str(i), "ne" + str(i))
 
 
 def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
-    parSize = nbHidden//serialSize
+    parSize = nbHidden // serialSize
     isFGR = typeLSTM == "FGR"
     isVanilla = typeLSTM == "Vanilla"
     # Start writing the file
     header(name)
 
-    listIn = ["netIn"+str(i) for i in range(nbInput)]
+    listIn = ["netIn" + str(i) for i in range(nbInput)]
     for i in range(nbHidden):
-        listIn.append("netHid"+str(i))
+        listIn.append("netHid" + str(i))
     if isFGR:
         listFGR = []
-        listFGR.append(["o"+str(i) for i in range(nbHidden)])
-        listFGR.append(["i"+str(i) for i in range(nbHidden)])
-        listFGR.append(["f"+str(i) for i in range(nbHidden)])
+        listFGR.append(["o" + str(i) for i in range(nbHidden)])
+        listFGR.append(["i" + str(i) for i in range(nbHidden)])
+        listFGR.append(["f" + str(i) for i in range(nbHidden)])
 
     predIn = []
     hidIndex = iter(range(nbHidden))
@@ -253,32 +367,34 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
     inputNet = "inputG" + str(i)
     cellStateNet = "cellStateG" + str(i)
     forgetNet = "forgetG" + str(i)
-
-    # Generate part of cell state gate
-    outputNets = genXBar(listIn, nbHidden, serialSize)
-    tanh(tmpNet, cellStateNet)
-    # Generate part of output gate
-    if isVanilla:
-        listIn.append("cellStateCur")
     if isFGR:
         listIn.append("cellStateOld")
         for l in listFGR:
             listIn.extend(l)
-    tmpNet = genXBar(listIn, nbHidden, serialSize)
-    sigmoid(tmpNet, outputNet)
-    if isVanilla:
-        listIn.pop()
-    # Generate part of input gate
     if isVanilla:
         listIn.append("cellStateOld")
-    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    # Generate part of input gate
+    inputNets = genXBar(listIn, nbHidden, serialSize)
     sigmoid(tmpNet, inputNet)
     # Generate part of forget gate
-    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    forgetNets = genXBar(listIn, nbHidden, serialSize)
     sigmoid(tmpNet, forgetNet)
-    # It is not mandatory to clean the list
-    # if isVanilla : listIn.pop()
-    # if isFGR : listIn.pop()
+    if isVanilla:
+        listIn.pop()
+    if isFGR:
+        listIn = listIn[: -(3 * nbHidden + 1)]
+    # Generate part of cell state gate
+    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    tanh(tmpNet, cellStateNet)
+    # Generate part of output gate
+    if isFGR:
+        listIn.append("cellStateOld")
+        for l in listFGR:
+            listIn.extend(l)
+    if isVanilla:
+        listIn.append("cellStateCur")
+    tmpNet = genXBar(listIn, nbHidden, serialSize)
+    sigmoid(tmpNet, outputNet)
 
     hiddenStateNet = genPointWise(
         outputNet, inputNet, cellStateNet, forgetNet, serialSize)
@@ -322,34 +438,71 @@ def genLSTM(name, nbInput, nbHidden, nbPred, serialSize, typeLSTM):
 
 
 def main():
-
     parser = argparse.ArgumentParser(
-        prog='Analog LSTM Generator', description='This program is used to generate spice netlists to be used in Cadence\'s virtuoso. It sets all the memristors values from the weights.')
-    parser.add_argument("-o", "--output", nargs='?', type=argparse.FileType("w"), default=sys.stdout,
-                        help="Specify an output file. The name of the file before '.' will be the name of the netlist.")
-    parser.add_argument("type", default="NP", choices=[
-                        "NP", "Vanilla", "GRU", "FGR"], help="Choose which LSTM architecture will be generated.")
-    parser.add_argument("-nh", "--number_hidden", default=4, type=int,
-                        help="Choose the number of hidden state for the LSTM.")
-    parser.add_argument("-ni", "--number_input", default=1, type=int,
-                        help="Choose the number of input state for the LSTM.")
-    parser.add_argument("-no", "--number_output", default=1, type=int,
-                        help="Choose the number of output state for the LSTM.")
-    parser.add_argument("-ns", "--serial_size", default=4, type=int,
-                        help="Choose the amount of serial channel for the LSTM. An LSTM time step will become SERIAL_SIZE times longer. (This value has to divide NUMBER_HIDDEN)")
+        prog="Analog LSTM Generator",
+        description="This program is used to generate spice netlists to be used in Cadence's virtuoso. It sets all the memristors values from the weights.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        nargs="?",
+        type=argparse.FileType("w"),
+        default=sys.stdout,
+        help="Specify an output file. The name of the file before '.' will be the name of the netlist.",
+    )
+    parser.add_argument(
+        "type",
+        default="NP",
+        choices=["NP", "Vanilla", "GRU", "FGR"],
+        help="Choose which LSTM architecture will be generated.",
+    )
+    parser.add_argument(
+        "-nh",
+        "--number_hidden",
+        default=4,
+        type=int,
+        help="Choose the number of hidden state for the LSTM.",
+    )
+    parser.add_argument(
+        "-ni",
+        "--number_input",
+        default=1,
+        type=int,
+        help="Choose the number of input state for the LSTM.",
+    )
+    parser.add_argument(
+        "-no",
+        "--number_output",
+        default=1,
+        type=int,
+        help="Choose the number of output state for the LSTM.",
+    )
+    parser.add_argument(
+        "-ns",
+        "--serial_size",
+        default=4,
+        type=int,
+        help="Choose the amount of serial channel for the LSTM. An LSTM time step will become SERIAL_SIZE times longer. (This value has to divide NUMBER_HIDDEN)",
+    )
 
     args = parser.parse_args()
 
     global out
     out = args.output
 
-    if (args.number_hidden % args.serial_size != 0):
+    if args.number_hidden % args.serial_size != 0:
         print("NUMBER_HIDDEN has to be a multiple of SERIAL_SIZE.")
         exit()
 
-    genLSTM(out.name.split('.')[0], args.number_input, args.number_hidden,
-            args.number_output, args.serial_size, args.type)
+    genLSTM(
+        out.name.split(".")[0],
+        args.number_input,
+        args.number_hidden,
+        args.number_output,
+        args.serial_size,
+        args.type,
+    )
 
 
-if (__name__ == "__main__"):
+if __name__ == "__main__":
     main()
