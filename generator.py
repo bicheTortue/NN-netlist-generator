@@ -17,7 +17,7 @@ def getNetId(_netCount=count()):
 
 
 def getResVal(w):
-    Rpos = (w - 1 + np.sqrt(w**2 + 1)) * Rf / w
+    Rpos = (w + 1 - np.sqrt(w**2 + 1)) * Rf / w
     Rneg = 2 * Rf - Rpos
     return (Rpos, Rneg)
 
@@ -99,8 +99,10 @@ def idc(minus, plus, dc=0, _id=count()):
 
 def genXBar(lIn, nbOutput, serialSize, weights=None):
     outNets = []
+    if weights is not None:
+        weights = iter(weights)
     for _ in range(nbOutput // serialSize):
-        posCurOut = getNetId()  # Because common, bring in to make parallel
+        posCurOut = getNetId()
         negCurOut = getNetId()
         for i in range(serialSize):
             if serialSize == 1:
@@ -111,13 +113,16 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
+                Rp, Rm = (100, 100) if weights is None else getResVal(
+                    next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
-                resistor(netIn, posWeight, 100)
-                # TODO : Add weights calculations
-                resistor(netIn, negWeight, 100)
+                resistor(netIn, posWeight, Rp)
+                resistor(netIn, negWeight, Rm)
             # Setting the bias weights
-            resistor("netBias", posWeight, 1000)
-            resistor("netBias", negWeight, 1000)
+            Rp, Rm = (100, 100) if weights is None else getResVal(
+                next(weights))
+            resistor("netBias", posWeight, Rp)
+            resistor("netBias", negWeight, Rm)
             if (
                 serialSize > 1
             ):  # The CMOS switches are not necessary if the system is fully parallelized
@@ -142,6 +147,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
 
 def genPointWiseGRU(
     outputNet, inputNet, cellStateNet, forgetNet, nbSerial
+
+
 ):  # Not working
     # Multiplication of C and forget
     tmpNet = getNetId()
@@ -275,15 +282,15 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
     if isVanilla:
         listIn.append("cellStateOld")
     # Generate part of input gate
-    inputNets = genXBar(listIn, nbHidden, serialSize)
+    inputNets = genXBar(listIn, nbHidden, serialSize, weights[0])
     # Generate part of forget gate
-    forgetNets = genXBar(listIn, nbHidden, serialSize)
+    forgetNets = genXBar(listIn, nbHidden, serialSize, weights[1])
     if isVanilla:
         listIn.pop()
     if isFGR:
         listIn = listIn[: -(3 * nbHidden + 1)]
     # Generate part of cell state gate
-    cellStateNets = genXBar(listIn, nbHidden, serialSize)
+    cellStateNets = genXBar(listIn, nbHidden, serialSize, weights[2])
     # Generate part of output gate
     if isFGR:
         listIn.append("cellStateOld")
@@ -291,7 +298,7 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
             listIn.extend(l)
     if isVanilla:
         listIn.append("cellStateCur")
-    outputNets = genXBar(listIn, nbHidden, serialSize)
+    outputNets = genXBar(listIn, nbHidden, serialSize, weights[3])
 
     for i in range(len(inputNets)):  # Also equal to parSize
         outputNet = "outputG" + str(i)
@@ -358,7 +365,7 @@ def main():
         default=sys.stdout,
         help="Specify an output file. The name of the file before '.' will be the name of the netlist.",
     )
-    parser.add_argument(
+    parser.add_argument(  # Change to bool ?
         "type",
         default="NP",
         choices=["NP", "Vanilla", "GRU", "FGR"],
@@ -411,9 +418,10 @@ def main():
         args.number_hidden,
         args.serial_size,
         args.type,
+        np.loadtxt("lstm.wei")
     )
 
-    predNet = genDense(genDense(hiddenNets, 2), 1)
+    predNet = genDense(genDense(hiddenNets, 2), 1, np.loadtxt("dense.wei"))
 
     genPowerNSignals(serialSize)
 
