@@ -409,11 +409,12 @@ def main():
         print("NUMBER_HIDDEN has to be a multiple of SERIAL_SIZE.")
         exit()
 
+    name = out.name.split(".")[0]
     # Start writing the file
     header(name)
 
     hiddenNets = genLSTM(
-        out.name.split(".")[0],
+        name,
         args.number_input,
         args.number_hidden,
         args.serial_size,
