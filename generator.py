@@ -34,7 +34,7 @@ def footer(module_name):
 
 
 def resistor(minus, plus, value, _id=count()):
-    if type(value) == int:
+    if type(value) != str:
         value = str(value)
     out.write("R" + str(next(_id)) + " " + minus +
               " " + plus + " " + value + "\n")
@@ -424,7 +424,7 @@ def main():
 
     predNet = genDense(genDense(hiddenNets, 2), 1, np.loadtxt("dense.wei"))
 
-    genPowerNSignals(serialSize)
+    genPowerNSignals(args.serial_size)
 
     print("\nThe prediction are outputed on", predNet)
 
