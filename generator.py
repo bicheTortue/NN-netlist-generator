@@ -308,10 +308,10 @@ def genPowerNSignals(
 ):  # NOTE : Find out if should be set here or in cadence
     vdc("gnd!", "vdd!", dc="vdd")
     vdc("gnd!", "Vcm", dc="vdd/2")
-    vdc("gnd!", "V3t", dc="V3t")
-    vdc("gnd!", "V3s", dc="V3s")
-    vdc("gnd!", "V2", dc="V2")
-    vdc("gnd!", "V1", dc="V1")
+    vdc("gnd!", "V3t", dc=0.55)
+    vdc("gnd!", "V3s", dc=0.8)
+    vdc("gnd!", "V2", dc=0.635)
+    vdc("gnd!", "V1", dc=1.1)
     idc("gnd!", "idc", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
@@ -344,20 +344,21 @@ def genPowerNSignals(
         )
         inverter("e" + str(i), "ne" + str(i))
     # Inputs
-    gndNet = "gnd!"  # Net on the ground side
+    inNet = getNetId()  # Net on the input side
+    vdc("gnd!", inNet, dc="vdd/2")
+    gndNet = inNet  # Net on the ground side
     inNet = getNetId()  # Net on the input side
     for i in range(nbInputs):
         for j in range(timeSteps):
-            inNet = "netIn" + str(i) if j == timeSteps - 1 else getNetId()
-            gndNet = getNetId()
             vpulse(
                 gndNet,
                 inNet,
-                val0="vdd/2",
-                val1="in" + str(i) + "step" + str(j) + "vdd/2",
+                val1="in" + str(i) + "step" + str(j) + " + vdd/2",
                 td="(T+T/20)*" + str(j),
                 pw="T",
             )
+            gndNet = inNet
+            inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
 
 
 def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
