@@ -312,6 +312,7 @@ def genPowerNSignals(
     vdc("gnd!", "V3s", dc=0.8)
     vdc("gnd!", "V2", dc=0.635)
     vdc("gnd!", "V1", dc=1.1)
+    vdc("gnd!", "netBias", dc=0.9 + 0.1)
     idc("gnd!", "idc", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
