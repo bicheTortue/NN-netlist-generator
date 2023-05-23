@@ -317,7 +317,7 @@ def genPowerNSignals(
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
     vpulse(
-        "gnd!", "predEn", td="(T+T/20)*" + str(timeSteps), pw="3*T/40"
+        "gnd!", "predEn", td='"(T+T/20)*' + str(timeSteps) + '"', pw="3*T/40"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
     vpulse("gnd!", "xbarEn", per='"2*(T+T/20)"', td='"(T+T/20)"', pw="T")
     for i in range(serialSize):
@@ -353,8 +353,8 @@ def genPowerNSignals(
             vpulse(
                 gndNet,
                 inNet,
-                val1="in" + str(i) + "step" + str(j) + " + vdd/2",
-                td="(T+T/20)*" + str(j),
+                val1="in" + str(i) + "step" + str(j) + "+vdd/2",
+                td='"(T+T/20)*' + str(j) + '"',
                 pw="T",
             )
             gndNet = inNet
