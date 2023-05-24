@@ -354,7 +354,7 @@ def genPowerNSignals(
             vpulse(
                 gndNet,
                 inNet,
-                val1="in" + str(i) + "step" + str(j) + "+vdd/2",
+                val1="in" + str(i) + "step" + str(j),
                 td='"(T+T/20)*' + str(j) + '"',
                 pw="T",
             )
