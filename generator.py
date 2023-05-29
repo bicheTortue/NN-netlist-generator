@@ -36,7 +36,8 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus +
+              " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -99,7 +100,8 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " +
+        outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -118,7 +120,8 @@ def buffer(inPin, outPin, _id=count()):
 
 
 def inverter(inPin, outPin, _id=count()):
-    out.write("Xinverter" + str(next(_id)) + " " + inPin + " " + outPin + " inverter\n")
+    out.write("Xinverter" + str(next(_id)) + " " +
+              inPin + " " + outPin + " inverter\n")
 
 
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
@@ -205,12 +208,14 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else getResVal(next(weights))
+                Rp, Rm = (100, 100) if weights is None else getResVal(
+                    next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
             # Setting the bias weights
-            Rp, Rm = (100, 100) if weights is None else getResVal(next(weights))
+            Rp, Rm = (100, 100) if weights is None else getResVal(
+                next(weights))
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if (
@@ -257,7 +262,8 @@ def genPointWiseGRU(
 
     # Memory of the cell state/hidden state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" +
+                str(i) + "p2", "m" + str(i) + "p1")
 
         # voltMult( # TODO : Finish
 
@@ -284,7 +290,8 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Memory of the cell state
     for i in range(nbSerial):
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" +
+                str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -313,7 +320,7 @@ def genPowerNSignals(
     vdc("gnd!", "V2", dc=0.635)
     vdc("gnd!", "V1", dc=1.1)
     vdc("gnd!", "netBias", dc=0.9 + 0.1)
-    idc("gnd!", "idc", dc="150u")
+    idc("idc", "vdd!", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
@@ -333,7 +340,8 @@ def genPowerNSignals(
             "gnd!",
             "m" + str(i) + "p2",
             per='"(T+T/20)"',
-            td="T/" + str(2 * serialSize) + "+" + str(i) + "*T/" + str(serialSize),
+            td="T/" + str(2 * serialSize) + "+" +
+            str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
         vpulse(
