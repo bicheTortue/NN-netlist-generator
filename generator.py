@@ -223,7 +223,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
             ):  # The CMOS switches are not necessary if the system is fully parallelized
                 # Positive line CMOS Switch
                 MOSFET(nmos, posWeight, "e" + str(i), posCurOut, posCurOut)
-                MOSFET(pmos, posWeight, "ne" + str(i), posCurOut, posWeight)
+                MOSFET(pmos, posCurOut, "ne" + str(i), posWeight, posWeight)
                 # Negative line CMOS Switch
                 MOSFET(nmos, negWeight, "e" + str(i), negCurOut, negCurOut)
                 MOSFET(pmos, negWeight, "ne" + str(i), negCurOut, negWeight)
