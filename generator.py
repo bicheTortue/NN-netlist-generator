@@ -226,7 +226,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
                 MOSFET(pmos, posCurOut, "ne" + str(i), posWeight, posWeight)
                 # Negative line CMOS Switch
                 MOSFET(nmos, negWeight, "e" + str(i), negCurOut, negCurOut)
-                MOSFET(pmos, negWeight, "ne" + str(i), negCurOut, negWeight)
+                MOSFET(pmos, negCurOut, "ne" + str(i), negWeight, negWeight)
 
         tmpOp1 = getNetId()
         # OpAmps to voltage again
