@@ -313,31 +313,31 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 def genPowerNSignals(
     nbInputs, timeSteps, serialSize
 ):  # NOTE : Find out if should be set here or in cadence
-    vdc("gnd!", "vdd!", dc="vdd")
-    vdc("gnd!", "Vcm", dc="vdd/2")
-    vdc("gnd!", "V3t", dc=0.55)
-    vdc("gnd!", "V3s", dc=0.8)
-    vdc("gnd!", "V2", dc=0.635)
-    vdc("gnd!", "V1", dc=1.1)
-    vdc("gnd!", "netBias", dc=0.9 + 0.1)
+    vdc("0", "vdd!", dc="vdd")
+    vdc("0", "Vcm", dc="vdd/2")
+    vdc("0", "V3t", dc=0.55)
+    vdc("0", "V3s", dc=0.8)
+    vdc("0", "V2", dc=0.635)
+    vdc("0", "V1", dc=1.1)
+    vdc("Vcm", "netBias", dc=0.1)  # Sourcing on Vcm for the vdd/2 is it right?
     idc("idc", "vdd!", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
-    vpulse("gnd!", "nextT", per="T+T/20", td="T", pw="T/20")
+    vpulse("0", "nextT", per="T+T/20", td="T", pw="T/20")
     vpulse(
-        "gnd!", "predEn", td='"(T+T/20)*' + str(timeSteps) + '"', pw="3*T/40"
+        "0", "predEn", td='"(T+T/20)*' + str(timeSteps) + '"', pw="3*T/40"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
-    vpulse("gnd!", "xbarEn", per='"(T+T/20)"', td='"(T+T/20)"', pw="T")
+    vpulse("0", "xbarEn", per='"(T+T/20)"', td='"(T+T/20)"', pw="T")
     for i in range(serialSize):
         vpulse(
-            "gnd!",
+            "0",
             "m" + str(i) + "p1",
             per='"(T+T/20)"',
             td=str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
         vpulse(
-            "gnd!",
+            "0",
             "m" + str(i) + "p2",
             per='"(T+T/20)"',
             td="T/" + str(2 * serialSize) + "+" +
@@ -345,7 +345,7 @@ def genPowerNSignals(
             pw="T/" + str(2 * serialSize),
         )
         vpulse(
-            "gnd!",
+            "0",
             "e" + str(i),
             per='"(T+T/20)"',
             td=str(i) + "*T/" + str(serialSize),
@@ -353,11 +353,11 @@ def genPowerNSignals(
         )
         inverter("e" + str(i), "ne" + str(i))
     # Inputs
-    inNet = getNetId()  # Net on the input side
-    vdc("gnd!", inNet, dc="vdd/2")
-    gndNet = inNet  # Net on the ground side
-    inNet = getNetId()  # Net on the input side
+    # trying to use Vcm as common
+    # vdc("0", inNet, dc="vdd/2")
     for i in range(nbInputs):
+        gndNet = "Vcm"  # Net on the ground side
+        inNet = getNetId()  # Net on the input side
         for j in range(timeSteps):
             vpulse(
                 gndNet,
@@ -557,3 +557,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+else:
+    print(__name__)
