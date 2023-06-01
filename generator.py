@@ -120,8 +120,8 @@ def buffer(inPin, outPin, _id=count()):
 
 
 def inverter(inPin, outPin, _id=count()):
-    out.write("Xinverter" + str(next(_id)) + " " +
-              inPin + " " + outPin + " inverter\n")
+    out.write("Xinverter" + str(next(_id)) + " 0 " +
+              inPin + " " + outPin + " vdd! inverter\n")
 
 
 def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
@@ -132,11 +132,11 @@ def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
         + enableIn
         + " "
         + enableOut
-        + " "
+        + " 0 "
         + inPin
         + " "
         + outPin
-        + " memcell\n"
+        + " vdd! memcell\n"
     )
 
 
