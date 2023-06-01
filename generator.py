@@ -274,6 +274,11 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
+    # Code for buffer #
+    tmpNet2 = getNetId()
+    buffer(tmpNet, tmpNet2)
+    tmpNet = tmpNet2
+    ##################
     adderNet = getNetId()
     resistor(tmpNet, adderNet, "R1")
 
@@ -281,12 +286,19 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     tmpNet = getNetId()
     oldCellState = "cellStateOld"
     voltMult(forgetNet, oldCellState, tmpNet)
+    # Code for buffer #
+    tmpNet2 = getNetId()
+    buffer(tmpNet, tmpNet2)
+    tmpNet = tmpNet2
+    ##################
     resistor(tmpNet, adderNet, "R1")
 
     # opAmp adder
     postAddNet = "cellStateCur"
-    opAmp("Vcm", adderNet, postAddNet)
-    resistor(adderNet, postAddNet, "R2")
+    tmpNet = getNetId()
+    opAmp("Vcm", adderNet, tmpNet)
+    resistor(adderNet, tmpNet, "R2")
+    buffer(tmpNet, postAddNet)
 
     # Memory of the cell state
     for i in range(nbSerial):
@@ -296,10 +308,20 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # tanh activation function
     tmpNet = getNetId()
     tanh(adderNet, tmpNet)
+    # Code for buffer #
+    tmpNet2 = getNetId()
+    buffer(tmpNet, tmpNet2)
+    tmpNet = tmpNet2
+    ##################
 
     # Multiplication of last result and output gate
     tmpNet2 = getNetId()
     voltMult(outputNet, tmpNet, tmpNet2)
+    # Code for buffer #
+    tmpNet = getNetId()
+    buffer(tmpNet2, tmpNet)
+    tmpNet2 = tmpNet
+    ##################
 
     # Multiplication by 10
     tmpNet = getNetId()
@@ -417,10 +439,18 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
         inputNet = "inputG" + str(i)
         cellStateNet = "cellStateG" + str(i)
         forgetNet = "forgetG" + str(i)
-        sigmoid(inputNets[i], inputNet)
-        sigmoid(forgetNets[i], forgetNet)
-        tanh(cellStateNets[i], cellStateNet)
-        sigmoid(outputNets[i], outputNet)
+        tmpNet = getNetId()
+        sigmoid(inputNets[i], tmpNet)
+        buffer(tmpNet, inputNet)
+        tmpNet = getNetId()
+        sigmoid(forgetNets[i], tmpNet)
+        buffer(tmpNet, forgetNet)
+        tmpNet = getNetId()
+        tanh(cellStateNets[i], tmpNet)
+        buffer(tmpNet, cellStateNet)
+        tmpNet = getNetId()
+        sigmoid(outputNets[i], tmpNet)
+        buffer(tmpNet, outputNet)
 
         hiddenStateNet = genPointWise(
             outputNet, inputNet, cellStateNet, forgetNet, serialSize
