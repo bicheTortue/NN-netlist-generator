@@ -504,7 +504,7 @@ def main():
         "--number_output",
         default=1,
         type=int,
-        help="Choose the number of outputs for the LSTM. Default : 1",
+        help="Choose the number of outputs for the overall circuit. Default : 1",
     )
     parser.add_argument(
         "-ts",
