@@ -203,7 +203,7 @@ def vpulseReal(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=cou
         + str(td)
         + "\n"
     )
-    resistor(tmpNet, plus, "r")
+    resistor(tmpNet, plus, 10)
 
 
 def vdcReal(minus, plus, dc=0, _id=count()):
@@ -219,7 +219,7 @@ def vdcReal(minus, plus, dc=0, _id=count()):
         + str(dc)
         + " srcType=dc\n"
     )
-    resistor(tmpNet, plus, "r")
+    resistor(tmpNet, plus, 10)
 
 
 def idc(minus, plus, dc=0, _id=count()):
