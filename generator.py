@@ -456,7 +456,10 @@ def genPowerNSignals(
                 pw="T",
             )
             gndNet = inNet
+            # needs to be fixed, doesn't work for one time step
             inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
+    # add small delay to set all memcells
+    # Harder than I thought
 
 
 def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
