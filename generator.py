@@ -59,29 +59,31 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
 
 
 def sigmoid(Vin, Vout, _id=count()):
+    tmpNet = getNetId()
     out.write(
         "Xsig"
         + str(next(_id))
         + " V1 V2 V3s "
         + Vin
         + " "
-        + Vout
+        + tmpNet
         + " 0 idc vdd! sigmoid\n"
     )
-    # tmpNet = getNetId()
-    # buffer(tmpNet, Vout)
+    voltInv(tmpNet, Vout)
 
 
 def tanh(Vin, Vout, _id=count()):
+    tmpNet = getNetId()
     out.write(
         "Xtanh"
         + str(next(_id))
         + " V1 V2 V3t "
         + Vin
         + " "
-        + Vout
+        + tmpNet
         + " 0 idc vdd! tanh\n"
     )
+    voltInv(tmpNet, Vout)
 
 
 def voltMult(in1, in2, outPin, _id=count()):
@@ -102,6 +104,22 @@ def opAmp(pin, nin, outPin, _id=count()):
     out.write(
         "XopAmp" + str(next(_id)) + " " + nin + " " +
         outPin + " " + pin + " opAmp\n"
+    )
+
+
+def voltInv(inPin, outPin, _id=count()):
+    tmpNet = getNetId()
+    res = 10**5
+    resistor(inPin, tmpNet, res)
+    resistor(tmpNet, outPin, res)
+    out.write(
+        "XvoltInv"
+        + str(next(_id))
+        + " "
+        + tmpNet
+        + " "
+        + outPin
+        + " Vcm opAmp\n"
     )
 
 
@@ -300,9 +318,11 @@ def genPointWiseGRU(
     resistor(tmpNet, adderNet, "R1")
 
     # opAmp adder
+    tmpNet = getNetId()
     postAddNet = getNetId()
-    opAmp("Vcm", adderNet, postAddNet)
-    resistor(adderNet, postAddNet, "R2")
+    opAmp("Vcm", adderNet, tmpNet)
+    resistor(adderNet, tmpNet, "R2")
+    voltInv(tmpNet, postAddNet)
 
     # Memory of the cell state/hidden state
     for i in range(nbSerial):
@@ -342,7 +362,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     tmpNet = getNetId()
     opAmp("Vcm", adderNet, tmpNet)
     resistor(adderNet, tmpNet, "R2")
-    buffer(tmpNet, postAddNet)
+    voltInv(tmpNet, postAddNet)
 
     # Memory of the cell state
     for i in range(nbSerial):
@@ -370,9 +390,11 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication by 10
     tmpNet = getNetId()
     resistor(tmpNet2, tmpNet, "R3")
+    tmpNet2 = getNetId()
+    opAmp("Vcm", tmpNet, tmpNet2)
+    resistor(tmpNet, tmpNet2, "R4")
     hidNet = getNetId()
-    opAmp("Vcm", tmpNet, hidNet)
-    resistor(tmpNet, hidNet, "R4")
+    voltInv(tmpNet2, hidNet)
     return hidNet
 
 
