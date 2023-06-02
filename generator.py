@@ -140,6 +140,7 @@ def memcell(inPin, outPin, enableIn, enableOut, _id=count()):
     )
 
 
+# Ideal sources
 def vpulse(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
     out.write(
         "Vpulse"
@@ -176,6 +177,49 @@ def vdc(minus, plus, dc=0, _id=count()):
         + str(dc)
         + " srcType=dc\n"
     )
+
+
+# Real sources
+def vpulseReal(minus, plus, dc=0, val0=0, val1="vdd", per=0, pw=0, td=0, _id=count()):
+    tmpNet = getNetId()
+    out.write(
+        "Vpulse"
+        + str(next(_id))
+        + " "
+        + tmpNet
+        + " "
+        + minus
+        + " DC="
+        + str(dc)
+        + " srcType=pulse val0="
+        + str(val0)
+        + " val1="
+        + str(val1)
+        + " per="
+        + str(per)
+        + " pw="
+        + str(pw)
+        + " td="
+        + str(td)
+        + "\n"
+    )
+    resistor(tmpNet, plus, 1000)
+
+
+def vdcReal(minus, plus, dc=0, _id=count()):
+    tmpNet = getNetId()
+    out.write(
+        "Vdc"
+        + str(next(_id))
+        + " "
+        + tmpNet
+        + " "
+        + minus
+        + " DC="
+        + str(dc)
+        + " srcType=dc\n"
+    )
+    resistor(tmpNet, plus, 1000)
 
 
 def idc(minus, plus, dc=0, _id=count()):
@@ -335,30 +379,31 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 def genPowerNSignals(
     nbInputs, timeSteps, serialSize
 ):  # NOTE : Find out if should be set here or in cadence
-    vdc("0", "vdd!", dc="vdd")
-    vdc("0", "Vcm", dc="vdd/2")
-    vdc("0", "V3t", dc=0.55)
-    vdc("0", "V3s", dc=0.8)
-    vdc("0", "V2", dc=0.635)
-    vdc("0", "V1", dc=1.1)
-    vdc("Vcm", "netBias", dc=0.1)  # Sourcing on Vcm for the vdd/2 is it right?
+    vdcReal("0", "vdd!", dc="vdd")
+    vdcReal("0", "Vcm", dc="vdd/2")
+    vdcReal("0", "V3t", dc=0.55)
+    vdcReal("0", "V3s", dc=0.8)
+    vdcReal("0", "V2", dc=0.635)
+    vdcReal("0", "V1", dc=1.1)
+    # Sourcing on Vcm for the vdd/2 is it right?
+    vdcReal("Vcm", "netBias", dc=0.1)
     idc("idc", "vdd!", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
-    vpulse("0", "nextT", per="T+T/20", td="T", pw="T/20")
-    vpulse(
+    vpulseReal("0", "nextT", per="T+T/20", td="T", pw="T/20")
+    vpulseReal(
         "0", "predEn", td='"(T+T/20)*' + str(timeSteps) + '"', pw="3*T/40"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
-    vpulse("0", "xbarEn", per='"(T+T/20)"', td='"(T+T/20)"', pw="T")
+    vpulseReal("0", "xbarEn", per='"(T+T/20)"', td='"(T+T/20)"', pw="T")
     for i in range(serialSize):
-        vpulse(
+        vpulseReal(
             "0",
             "m" + str(i) + "p1",
             per='"(T+T/20)"',
             td=str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
-        vpulse(
+        vpulseReal(
             "0",
             "m" + str(i) + "p2",
             per='"(T+T/20)"',
@@ -366,7 +411,7 @@ def genPowerNSignals(
             str(i) + "*T/" + str(serialSize),
             pw="T/" + str(2 * serialSize),
         )
-        vpulse(
+        vpulseReal(
             "0",
             "e" + str(i),
             per='"(T+T/20)"',
@@ -381,7 +426,7 @@ def genPowerNSignals(
         gndNet = "Vcm"  # Net on the ground side
         inNet = getNetId()  # Net on the input side
         for j in range(timeSteps):
-            vpulse(
+            vpulseReal(
                 gndNet,
                 inNet,
                 val1="in" + str(i) + "step" + str(j),
