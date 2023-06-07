@@ -399,10 +399,14 @@ def genPowerNSignals(
 ):  # NOTE : Find out if should be set here or in cadence
     vdc("0", "vdd!", dc="vdd")
     vdc("0", "Vcm", dc="vdd/2")
-    vdc("0", "V3t", dc=0.55)
-    vdc("0", "V3s", dc=0.8)
-    vdc("0", "V2", dc=0.635)
-    vdc("0", "V1", dc=1.1)
+    # vdc("0", "V3t", dc=0.55)
+    # vdc("0", "V3s", dc=0.8)
+    # vdc("0", "V2", dc=0.635)
+    # vdc("0", "V1", dc=1.1)
+    vdc("0", "V3t", dc="V3t")
+    vdc("0", "V3s", dc="V3s")
+    vdc("0", "V2", dc="V2")
+    vdc("0", "V1", dc="V1")
     # Sourcing on Vcm for the vdd/2 is it right?
     vdc("Vcm", "netBias", dc=0.1)
     idc("idc", "vdd!", dc="150u")
