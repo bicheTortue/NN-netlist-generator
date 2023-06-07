@@ -423,7 +423,7 @@ def genPowerNSignals(
             "m" + str(i) + "p1",
             per='"(T+T/20)"',
             td=str(i) + "*T/" + str(serialSize),
-            pw="T/" + str(2 * serialSize),
+            pw="T/" + str(2 * serialSize)+"-T/" + str(20 * serialSize),
         )
         vpulse(
             "0",
@@ -431,7 +431,7 @@ def genPowerNSignals(
             per='"(T+T/20)"',
             td="T/" + str(2 * serialSize) + "+" +
             str(i) + "*T/" + str(serialSize),
-            pw="T/" + str(2 * serialSize),
+            pw="T/" + str(2 * serialSize)+"-T/" + str(20 * serialSize),
         )
         vpulse(
             "0",
