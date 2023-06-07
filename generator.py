@@ -59,31 +59,27 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
 
 
 def sigmoid(Vin, Vout, _id=count()):
-    tmpNet = getNetId()
     out.write(
         "Xsig"
         + str(next(_id))
         + " V1 V2 V3s "
         + Vin
         + " "
-        + tmpNet
+        + Vout
         + " 0 idc vdd! sigmoid\n"
     )
-    voltInv(tmpNet, Vout)
 
 
 def tanh(Vin, Vout, _id=count()):
-    tmpNet = getNetId()
     out.write(
         "Xtanh"
         + str(next(_id))
         + " V1 V2 V3t "
         + Vin
         + " "
-        + tmpNet
+        + Vout
         + " 0 idc vdd! tanh\n"
     )
-    voltInv(tmpNet, Vout)
 
 
 def voltMult(in1, in2, outPin, _id=count()):
