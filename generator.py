@@ -357,7 +357,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # opAmp adder
     postAddNet = "cellStateCur"
     tmpNet = getNetId()
-    opAmp("Vcm", adderNet, tmpNet)
+    opAmp("Vcm", adderNet, postAddNet)
     resistor(adderNet, postAddNet, "R2")
     # voltInv(tmpNet, postAddNet)
 
@@ -388,8 +388,8 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     tmpNet = getNetId()
     resistor(tmpNet2, tmpNet, "R3")
     tmpNet2 = getNetId()
-    opAmp("Vcm", tmpNet, tmpNet2)
     hidNet = getNetId()
+    opAmp("Vcm", tmpNet, postAddNet)
     resistor(tmpNet, hidNet, "R4")
     # voltInv(tmpNet2, hidNet)
     return hidNet
