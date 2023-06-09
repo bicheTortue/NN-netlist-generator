@@ -319,7 +319,7 @@ def genPointWiseGRU(
     postAddNet = getNetId()
     opAmp("Vcm", adderNet, tmpNet)
     resistor(adderNet, tmpNet, "R2")
-    voltInv(tmpNet, postAddNet)
+    # voltInv(tmpNet, postAddNet)
 
     # Memory of the cell state/hidden state
     for i in range(nbSerial):
@@ -358,8 +358,8 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     postAddNet = "cellStateCur"
     tmpNet = getNetId()
     opAmp("Vcm", adderNet, tmpNet)
-    resistor(adderNet, tmpNet, "R2")
-    voltInv(tmpNet, postAddNet)
+    resistor(adderNet, postAddNet, "R2")
+    # voltInv(tmpNet, postAddNet)
 
     # Memory of the cell state
     for i in range(nbSerial):
@@ -389,9 +389,9 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     resistor(tmpNet2, tmpNet, "R3")
     tmpNet2 = getNetId()
     opAmp("Vcm", tmpNet, tmpNet2)
-    resistor(tmpNet, tmpNet2, "R4")
     hidNet = getNetId()
-    voltInv(tmpNet2, hidNet)
+    resistor(tmpNet, hidNet, "R4")
+    # voltInv(tmpNet2, hidNet)
     return hidNet
 
 
