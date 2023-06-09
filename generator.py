@@ -417,7 +417,7 @@ def genPowerNSignals(
     vpulse(
         "0", "predEn", td='"(T+T/20)*' + str(timeSteps) + '"', pw="3*T/40"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
-    vpulse("0", "xbarEn", per='"(T+T/20)"', td='"(T+T/20)"', pw="T")
+    vpulse("0", "xbarEn", per='"(T+T/20)"', pw="T")
     for i in range(serialSize):
         vpulse(
             "0",
