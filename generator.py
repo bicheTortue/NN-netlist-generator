@@ -305,7 +305,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     voltMult(inputNet, cellStateNet, tmpNet)
     # Code for buffer #
     tmpNet2 = getNetId()
-    buffer(tmpNet, tmpNet2)
+    voltInv(tmpNet, tmpNet2)
     tmpNet = tmpNet2
     ##################
     adderNet = getNetId()
@@ -317,7 +317,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     voltMult(forgetNet, oldCellState, tmpNet)
     # Code for buffer #
     tmpNet2 = getNetId()
-    buffer(tmpNet, tmpNet2)
+    voltInv(tmpNet, tmpNet2)
     tmpNet = tmpNet2
     ##################
     resistor(tmpNet, adderNet, "R1")
@@ -343,7 +343,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Code for buffer #
     tmpNet2 = getNetId()
     buffer(tmpNet, tmpNet2)
-    # tmpNet = tmpNet2
+    tmpNet = tmpNet2
     ##################
 
     # Multiplication of last result and output gate
@@ -351,7 +351,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     voltMult(outputNet, tmpNet, tmpNet2)
     # Code for buffer #
     tmpNet = getNetId()
-    buffer(tmpNet2, tmpNet)
+    voltInv(tmpNet2, tmpNet)
     tmpNet2 = tmpNet
     ##################
 
