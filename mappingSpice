@@ -2,9 +2,12 @@
 devSelect := resistor res
 	termOrder := MINUS PLUS
 
-devSelect := voltageMult voltageMult
+devSelect := voltageMult voltMult
 	termOrder := in1 in2 out
 
 devSelect := opAmp opAmp
 	termOrder := pin nin out
+
+devSelect := vsource vsource
+	termOrder := PLUS MINUS
 
