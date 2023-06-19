@@ -383,33 +383,34 @@ def genPowerNSignals(
     idc("idc", "vdd!", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
-    vpulse("0", "nextT", per="T+T/8", td="T", pw="T/8")
+    vpulse("0", "nextT", per="T*"+str(serialSize) +
+           "+T/2", td="T*"+str(serialSize), pw="T/2")
     vpulse(
-        "0", "predEn", td='"(T+T/8)*' + str(timeSteps) + '"', pw="T/8"
+        "0", "predEn", td='"(T*'+str(serialSize)+'+T/2)*' + str(timeSteps) + '"', pw="T/2"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
-    vpulse("0", "xbarEn", per='"(T+T/8)"', pw="T")
+    vpulse("0", "xbarEn", per="T*"+str(serialSize) +
+           "+T/2", pw="T*"+str(serialSize))
     for i in range(serialSize):
         vpulse(
             "0",
             "m" + str(i) + "p1",
-            per='"(T+T/8)"',
-            td=str(i) + "*T/" + str(serialSize),
-            pw="T/" + str(2 * serialSize)+"-T/" + str(20 * serialSize),
+            per="T*"+str(serialSize)+"+T/2",
+            td=str(i) + "*T",
+            pw="T/2-T/16",
         )
         vpulse(
             "0",
             "m" + str(i) + "p2",
-            per='"(T+T/8)"',
-            td="T/" + str(2 * serialSize) + "+" +
-            str(i) + "*T/" + str(serialSize),
-            pw="T/" + str(2 * serialSize)+"-T/" + str(20 * serialSize),
+            per="T*"+str(serialSize)+"+T/2",
+            td=str(i) + "*T+T/2",
+            pw="T/2-T/16",
         )
         vpulse(
             "0",
             "e" + str(i),
-            per='"(T+T/8)"',
-            td=str(i) + "*T/" + str(serialSize),
-            pw="T/" + str(serialSize),
+            per="T*"+str(serialSize)+"+T/2",
+            td=str(i) + "*T",
+            pw="T",
         )
         inverter("e" + str(i), "ne" + str(i))
     # Inputs
@@ -423,8 +424,8 @@ def genPowerNSignals(
                 gndNet,
                 inNet,
                 val1="in" + str(i) + "step" + str(j),
-                td='"(T+T/8)*' + str(j) + '"',
-                pw="T",
+                td='"(T*'+str(serialSize)+'+T/2)*' + str(j) + '"',
+                pw="T*"+str(serialSize),
             )
             gndNet = inNet
             # needs to be fixed, doesn't work for one time step
@@ -614,7 +615,6 @@ def main():
         np.loadtxt("lstm.wei"),
     )
 
-    # predNet = genDense(genDense(hiddenNets, 2), 1, np.loadtxt("dense.wei"))
     predNet = genDense(hiddenNets, 1, np.loadtxt("dense.wei"))
 
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
