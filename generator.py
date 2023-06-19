@@ -476,7 +476,7 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
         listIn.append("cellStateCur")
     outputNets = genXBar(listIn, nbHidden, serialSize, weights[3])
 
-    for i in range(len(inputNets)):  # Also equal to parSize
+    for i in range(parSize):  # Also equal to parSize
         outputNet = "outputG" + str(i)
         inputNet = "inputG" + str(i)
         cellStateNet = "cellStateG" + str(i)
@@ -501,35 +501,35 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
         # Memory cells for prediction NN
         # Memory cells for feedback
         for i in range(serialSize):
-            for _ in range(parSize):
-                curIndex = str(next(hidIndex))
+            # for _ in range(parSize):
+            curIndex = str(next(hidIndex))
+            tmpNet = getNetId()
+            predIn.append(tmpNet)
+            memcell(
+                hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
+            )  # Prediction memcells
+            tmpNet = getNetId()
+            memcell(
+                hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT"
+            )  # Feedback memcells
+            # There are 2 of them not to override the values with-in a single LSTM step
+            memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
+            if isFGR:
+                # For the output gate recurrence
                 tmpNet = getNetId()
-                predIn.append(tmpNet)
-                memcell(
-                    hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
-                )  # Prediction memcells
+                memcell(hiddenStateNet, tmpNet,
+                        "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
+                # For the input gate recurrence
                 tmpNet = getNetId()
-                memcell(
-                    hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT"
-                )  # Feedback memcells
-                # There are 2 of them not to override the values with-in a single LSTM step
-                memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
-                if isFGR:
-                    # For the output gate recurrence
-                    tmpNet = getNetId()
-                    memcell(hiddenStateNet, tmpNet,
-                            "m" + str(i) + "p2", "nextT")
-                    memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
-                    # For the input gate recurrence
-                    tmpNet = getNetId()
-                    memcell(hiddenStateNet, tmpNet,
-                            "m" + str(i) + "p2", "nextT")
-                    memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
-                    # For the forget gate recurrence
-                    tmpNet = getNetId()
-                    memcell(hiddenStateNet, tmpNet,
-                            "m" + str(i) + "p2", "nextT")
-                    memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
+                memcell(hiddenStateNet, tmpNet,
+                        "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
+                # For the forget gate recurrence
+                tmpNet = getNetId()
+                memcell(hiddenStateNet, tmpNet,
+                        "m" + str(i) + "p2", "nextT")
+                memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
 
     return predIn
 
