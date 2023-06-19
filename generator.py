@@ -60,6 +60,8 @@ def MOSFET(tType, drain, gate, source, bulk, _id=count()):
 
 
 def sigmoid(Vin, Vout, _id=count()):
+    tmpNet = getNetId()
+    idc(tmpNet, "vdd!", dc="150u")
     out.write(
         "Xsig"
         + str(next(_id))
@@ -67,11 +69,13 @@ def sigmoid(Vin, Vout, _id=count()):
         + Vin
         + " "
         + Vout
-        + " 0 idc vdd! sigmoid\n"
+        + " 0 " + tmpNet + " vdd! sigmoid\n"
     )
 
 
 def tanh(Vin, Vout, _id=count()):
+    tmpNet = getNetId()
+    idc(tmpNet, "vdd!", dc="150u")
     out.write(
         "Xtanh"
         + str(next(_id))
@@ -79,7 +83,7 @@ def tanh(Vin, Vout, _id=count()):
         + Vin
         + " "
         + Vout
-        + " 0 idc vdd! tanh\n"
+        + " 0 " + tmpNet + " vdd! tanh\n"
     )
 
 
@@ -380,7 +384,8 @@ def genPowerNSignals(
     vdc("0", "V1", dc="V1")
     # Sourcing on Vcm for the vdd/2 is it right?
     vdc("Vcm", "netBias", dc=0.1)
-    idc("idc", "vdd!", dc="150u")
+    # needs to be connected to each device (loi des noeuds debilos)
+    # idc("idc", "vdd!", dc="150u")
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("0", "nextT", per="T*"+str(serialSize) +
