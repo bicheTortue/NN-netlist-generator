@@ -358,7 +358,6 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     # Multiplication by 10
     tmpNet = getNetId()
     resistor(tmpNet2, tmpNet, "R3")
-    tmpNet2 = getNetId()
     hidNet = getNetId()
     opAmp("Vcm", tmpNet, hidNet)
     resistor(tmpNet, hidNet, "R4")
