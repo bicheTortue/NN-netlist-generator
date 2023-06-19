@@ -299,7 +299,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
     return outNets
 
 
-def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
+def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
@@ -313,7 +313,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
 
     # Multiplication with old cell state
     tmpNet = getNetId()
-    oldCellState = "cellStateOld"
+    oldCellState = "cellStateOld"+str(parNum)
     voltMult(forgetNet, oldCellState, tmpNet)
     # Code for buffer #
     tmpNet2 = getNetId()
@@ -323,7 +323,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial):
     resistor(tmpNet, adderNet, "R1")
 
     # opAmp adder
-    postAddNet = "cellStateCur"
+    postAddNet = "cellStateCur"+str(parNum)
     tmpNet = getNetId()
     opAmp("Vcm", adderNet, postAddNet)
     resistor(adderNet, postAddNet, "R2")
@@ -495,7 +495,7 @@ def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
         buffer(tmpNet, outputNet)
 
         hiddenStateNet = genPointWise(
-            outputNet, inputNet, cellStateNet, forgetNet, serialSize
+            outputNet, inputNet, cellStateNet, forgetNet, serialSize, i
         )
 
         # Memory cells for prediction NN
