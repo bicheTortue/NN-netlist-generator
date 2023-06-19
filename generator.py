@@ -423,7 +423,7 @@ def genPowerNSignals(
                 gndNet,
                 inNet,
                 val1="in" + str(i) + "step" + str(j),
-                td='"(T+T/20)*' + str(j) + '"',
+                td='"(T+T/8)*' + str(j) + '"',
                 pw="T",
             )
             gndNet = inNet
