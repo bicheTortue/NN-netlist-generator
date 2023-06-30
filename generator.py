@@ -389,31 +389,31 @@ def genPowerNSignals(
 
     # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse("0", "nextT", per="T*"+str(serialSize) +
-           "+T/2", td="T*"+str(serialSize), pw="T/2")
+           "+T/8", td="T*"+str(serialSize), pw="T/8")
     vpulse(
-        "0", "predEn", td='"(T*'+str(serialSize)+'+T/2)*' + str(timeSteps) + '"', pw="T/2"
+        "0", "predEn", td='"(T*'+str(serialSize)+'+T/8)*' + str(timeSteps) + '"', pw="T/2"
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
     vpulse("0", "xbarEn", per="T*"+str(serialSize) +
-           "+T/2", pw="T*"+str(serialSize))
+           "+T/8", pw="T*"+str(serialSize))
     for i in range(serialSize):
         vpulse(
             "0",
             "m" + str(i) + "p1",
-            per="T*"+str(serialSize)+"+T/2",
+            per="T*"+str(serialSize)+"+T/8",
             td=str(i) + "*T",
             pw="T/2-T/16",
         )
         vpulse(
             "0",
             "m" + str(i) + "p2",
-            per="T*"+str(serialSize)+"+T/2",
+            per="T*"+str(serialSize)+"+T/8",
             td=str(i) + "*T+T/2",
             pw="T/2-T/16",
         )
         vpulse(
             "0",
             "e" + str(i),
-            per="T*"+str(serialSize)+"+T/2",
+            per="T*"+str(serialSize)+"+T/8",
             td=str(i) + "*T",
             pw="T",
         )
