@@ -18,7 +18,7 @@ def getNetId(_netCount=count()):
 
 def getResVal(w):
     Rpos = (w + 1 - np.sqrt(w**2 + 1)) * Rf / w
-    Rpos = int("%.2g" % Rpos)
+    Rpos = float("%.2g" % Rpos)
     Rneg = 2 * Rf - Rpos
     return (Rpos, Rneg)
 
