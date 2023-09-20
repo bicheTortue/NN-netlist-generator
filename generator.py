@@ -16,7 +16,7 @@ def getNetId(_netCount=count()):
     return "net" + str(next(_netCount))
 
 
-def getResVal(w):
+def wei2res(w):
     Rpos = (w + 1 - np.sqrt(w**2 + 1)) * Rf / w
     Rpos = float("%.2g" % Rpos)
     Rneg = 2 * Rf - Rpos
@@ -271,13 +271,13 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else getResVal(
+                Rp, Rm = (100, 100) if weights is None else wei2res(
                     next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
             # Setting the bias weights
-            Rp, Rm = (100, 100) if weights is None else getResVal(
+            Rp, Rm = (100, 100) if weights is None else wei2res(
                 next(weights))
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
