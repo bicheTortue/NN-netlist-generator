@@ -549,12 +549,20 @@ def main():
         description="This program is used to generate spice netlists to be used in Cadence's virtuoso. It sets all the memristors values from the weights.",
     )
     parser.add_argument(
+        "-w",
+        "--weights",
+        nargs="?",
+        type=argparse.FileType("w"),
+        default=None,
+        help="Specify a file containing the weights.",
+    )
+    parser.add_argument(
         "-o",
         "--output",
         nargs="?",
         type=argparse.FileType("w"),
         default=sys.stdout,
-        help="Specify an output file. The name of the file before '.' will be the name of the netlist.",
+        help="Specify an output file. The name of the file before the extension will be the name of the netlist.",
     )
     parser.add_argument(  # Change to bool ?
         "type",
@@ -607,6 +615,12 @@ def main():
         print("NUMBER_HIDDEN has to be a multiple of SERIAL_SIZE.")
         exit()
 
+    if args.weights is None:
+        weights = [None for i in range(10)]
+        # Placeholder until I figure out how to specify architecture
+    else:
+        weights = np.loadtxt(args.weights)
+
     name = out.name.split(".")[0]
     # Start writing the file
     header(name)
@@ -617,17 +631,18 @@ def main():
         args.number_hidden,
         args.serial_size,
         args.type,
-        np.loadtxt("lstm.wei"),
+        weights[0],
+        # np.loadtxt("lstm.wei"),
     )
 
-    predNet = genDense(hiddenNets, 1, np.loadtxt("dense.wei"))
+    predNet = genDense(hiddenNets, 1, weights[1])
 
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
 
     print("\nThe prediction are outputed on", predNet)
 
-    # End of the file
     footer(name)
+    # End of the file
     out.close()
 
 
