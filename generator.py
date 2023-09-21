@@ -553,7 +553,7 @@ def main():
         "-m",
         "--model",
         nargs=1,
-        type=argparse.FileType("w"),
+        type=argparse.FileType("rb"),
         default=None,
         help="Specify a file containing the model and its weights.",
     )
@@ -605,13 +605,8 @@ def main():
     global out
     out = args.output
 
-    if args.weights is None:
-        weights = [None for i in range(10)]
-        # Placeholder until I figure out how to specify architecture
-    else:
-        with open("all.wei", "rb") as file:
-            tmp = pickle.load(file)
-            arch, weights = tmp[0], tmp[1::]
+    tmp = pickle.load(args.model)
+    arch, weights = tmp[0], tmp[1::]
 
     tmpNet = ["netIn" + str(i) for i in range(args.number_input)]
 
