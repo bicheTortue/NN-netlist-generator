@@ -634,8 +634,7 @@ def main():
             nbOut = int(layer.split("(")[1].split(")")[0])
             tmpNet = genDense(tmpNet, nbOut, weights[i])
         elif "LSTM" is in layer:
-            tmp = layer.split("(")[1].split(")")[0].split(",")
-            nbIn, nbHid = int(tmp[0]), int(tmp[1])  # Remove nbIn
+            nbHid = int(layer.split("(")[1].split(")")[0])
             tmpNet = genLSTM(tmpNet, nbHid, args.serial_size,
                              args.type, weights[i])
 
