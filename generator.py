@@ -553,7 +553,7 @@ def main():
         "-m",
         "--model",
         nargs=1,
-        type=argparse.FileType("rb"),
+        type=str,
         default=None,
         help="Specify a file containing the model and its weights.",
     )
@@ -605,7 +605,8 @@ def main():
     global out
     out = args.output
 
-    tmp = pickle.load(args.model)
+    with open(args.model[0], "rb") as file:
+        tmp = pickle.load(file)
     arch, weights = tmp[0], tmp[1::]
 
     tmpNet = ["netIn" + str(i) for i in range(args.number_input)]
