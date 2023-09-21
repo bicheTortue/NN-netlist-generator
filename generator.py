@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import pickle
 import sys
 import numpy as np
 from itertools import count
@@ -439,12 +440,11 @@ def genPowerNSignals(
     # Harder than I thought
 
 
-def genLSTM(name, nbInput, nbHidden, serialSize, typeLSTM="NP", weights=None):
+def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
     parSize = nbHidden // serialSize
     isFGR = typeLSTM == "FGR"
     isVanilla = typeLSTM == "Vanilla"
 
-    listIn = ["netIn" + str(i) for i in range(nbInput)]
     for i in range(nbHidden):
         listIn.append("netHid" + str(i))
     if isFGR:
@@ -619,27 +619,29 @@ def main():
         weights = [None for i in range(10)]
         # Placeholder until I figure out how to specify architecture
     else:
-        weights = np.loadtxt(args.weights)
+        with open("all.wei", "rp") as file:
+            tmp = pickle.load(file)
+            arch, weights = tmp[0], tmp[1::]
+
+    tmpNet = ["netIn" + str(i) for i in range(args.number_input)]
 
     name = out.name.split(".")[0]
     # Start writing the file
     header(name)
 
-    hiddenNets = genLSTM(
-        name,
-        args.number_input,
-        args.number_hidden,
-        args.serial_size,
-        args.type,
-        weights[0],
-        # np.loadtxt("lstm.wei"),
-    )
-
-    predNet = genDense(hiddenNets, 1, weights[1])
+    for i, layer in enumerate(arch):
+        if "Dense" is in layer:
+            nbOut = int(layer.split("(")[1].split(")")[0])
+            tmpNet = genDense(tmpNet, nbOut, weights[i])
+        elif "LSTM" is in layer:
+            tmp = layer.split("(")[1].split(")")[0].split(",")
+            nbIn, nbHid = int(tmp[0]), int(tmp[1])  # Remove nbIn
+            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size,
+                             args.type, weights[i])
 
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
 
-    print("\nThe prediction are outputed on", predNet)
+    print("\nThe prediction are outputed on", tmpNet)
 
     footer(name)
     # End of the file
