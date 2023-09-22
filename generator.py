@@ -111,16 +111,6 @@ def opAmp(pin, nin, outPin, _id=count()):
     )
 
 
-def voltInv(inPin, outPin, _id=count()):
-    tmpNet = getNetId()
-    res = 10**5
-    resistor(inPin, tmpNet, res)
-    resistor(tmpNet, outPin, res)
-    out.write(
-        "XvoltInv" + str(next(_id)) + " " + tmpNet + " " + outPin + " Vcm opAmp\n"
-    )
-
-
 def buffer(inPin, outPin, _id=count()):
     out.write(
         "Xbuffer"
@@ -303,31 +293,19 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
-    # Code for buffer #
-    tmpNet2 = getNetId()
-    voltInv(tmpNet, tmpNet2)
-    tmpNet = tmpNet2
-    ##################
     adderNet = getNetId()
     resistor(tmpNet, adderNet, "R1")
 
-    # Multiplication with old cell state
+    # Multiplication forget with old cell state
     tmpNet = getNetId()
     oldCellState = "cellStateOld" + str(parNum)
     voltMult(forgetNet, oldCellState, tmpNet)
-    # Code for buffer #
-    tmpNet2 = getNetId()
-    voltInv(tmpNet, tmpNet2)
-    tmpNet = tmpNet2
-    ##################
     resistor(tmpNet, adderNet, "R1")
 
     # opAmp adder
     postAddNet = "cellStateCur" + str(parNum)
-    tmpNet = getNetId()
     opAmp("Vcm", adderNet, postAddNet)
     resistor(adderNet, postAddNet, "R2")
-    # voltInv(tmpNet, postAddNet)
 
     # Memory of the cell state
     for i in range(nbSerial):
@@ -349,11 +327,6 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     # Multiplication of last result and output gate
     tmpNet2 = getNetId()
     voltMult(outputNet, tmpNet, tmpNet2)
-    # Code for buffer #
-    tmpNet = getNetId()
-    voltInv(tmpNet2, tmpNet)
-    tmpNet2 = tmpNet
-    ##################
 
     # Multiplication by 10
     tmpNet = getNetId()
@@ -361,7 +334,6 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     hidNet = getNetId()
     opAmp("Vcm", tmpNet, hidNet)
     resistor(tmpNet, hidNet, "R4")
-    # voltInv(tmpNet2, hidNet)
     return hidNet
 
 
