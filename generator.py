@@ -243,11 +243,11 @@ def idc(minus, plus, dc=0, _id=count()):
     )
 
 
-def genXBar(lIn, nbOutput, serialSize, weights=None):
+def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True):
     outNets = []
     if weights is not None:
         weights = iter(weights)
-    for _ in range(nbOutput // serialSize):
+    for j in range(nbOutput // serialSize):
         posCurOut = getNetId()
         negCurOut = getNetId()
         for i in range(serialSize):
@@ -267,6 +267,14 @@ def genXBar(lIn, nbOutput, serialSize, weights=None):
             Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
+            if peephole:
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                if isOld:
+                    resistor("cellStateOld" + str(j), posWeight, Rp)
+                    resistor("cellStateOld" + str(j), negWeight, Rm)
+                else:
+                    resistor("cellStateCur" + str(j), posWeight, Rp)
+                    resistor("cellStateCur" + str(j), negWeight, Rm)
             if (
                 serialSize > 1
             ):  # The CMOS switches are not necessary if the system is fully parallelized
@@ -310,10 +318,10 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     # Memory of the cell state
     for i in range(nbSerial):
         tmpNet = getNetId()
-        memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
-        memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
+        # memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
+        # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
         # Old way, kept in case
-        # memcell(postAddNet, oldCellState, "m" +str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -384,7 +392,7 @@ def genPowerNSignals(
             "0",
             "m" + str(i) + "p2",
             per="T*" + str(serialSize) + "+T/8",
-            td=str(i) + "*T+T/2",
+            td=str(i) + "*T+T/2+T/16",
             pw="T/2-T/16",
         )
         vpulse(
@@ -432,30 +440,28 @@ def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
     predIn = []
     hidIndex = iter(range(nbHidden))
 
-    if isFGR:
-        listIn.append("cellStateOld")
-        for l in listFGR:
-            listIn.extend(l)
-    if isVanilla:
-        listIn.append("cellStateOld")
-    # Generate part of input gate
-    inputNets = genXBar(listIn, nbHidden, serialSize, weights[0])
-    # Generate part of forget gate
-    forgetNets = genXBar(listIn, nbHidden, serialSize, weights[1])
-    if isVanilla:
-        listIn.pop()
-    if isFGR:
-        listIn = listIn[: -(3 * nbHidden + 1)]
     # Generate part of cell state gate
     cellStateNets = genXBar(listIn, nbHidden, serialSize, weights[2])
-    # Generate part of output gate
     if isFGR:
-        listIn.append("cellStateOld")
         for l in listFGR:
             listIn.extend(l)
-    if isVanilla:
-        listIn.append("cellStateCur")
-    outputNets = genXBar(listIn, nbHidden, serialSize, weights[3])
+    # Generate part of input gate
+    inputNets = genXBar(
+        listIn, nbHidden, serialSize, weights[0], peephole=isFGR or isVanilla
+    )
+    # Generate part of forget gate
+    forgetNets = genXBar(
+        listIn, nbHidden, serialSize, weights[1], peephole=isFGR or isVanilla
+    )
+    # Generate part of output gate
+    outputNets = genXBar(
+        listIn,
+        nbHidden,
+        serialSize,
+        weights[3],
+        peephole=isFGR or isVanilla,
+        isOld=not isVanilla,
+    )
 
     for i in range(parSize):  # Also equal to parSize
         outputNet = "outputG" + str(i)
@@ -574,6 +580,11 @@ def main():
 
     args = parser.parse_args()
 
+    if agrs.type == "GRU" and args.serial_size != 1:
+        print(
+            "The GRU architecture can only work in parallel mode, it cannot be serialized"
+        )
+        exit()
     global out
     out = args.output
 
