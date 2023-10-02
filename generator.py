@@ -38,7 +38,8 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus +
+              " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -107,7 +108,8 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " +
+        outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -127,7 +129,8 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin +
+        " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -259,7 +262,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -268,7 +272,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -302,18 +307,18 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
     adderNet = getNetId()
-    resistor(tmpNet, adderNet, "R1")
+    resistor(tmpNet, adderNet, "Ramp0")
 
     # Multiplication forget with old cell state
     tmpNet = getNetId()
     oldCellState = "cellStateOld" + str(parNum)
     voltMult(forgetNet, oldCellState, tmpNet)
-    resistor(tmpNet, adderNet, "R1")
+    resistor(tmpNet, adderNet, "Ramp0")
 
     # opAmp adder
     postAddNet = "cellStateCur" + str(parNum)
     opAmp("Vcm", adderNet, postAddNet)
-    resistor(adderNet, postAddNet, "R2")
+    resistor(adderNet, postAddNet, "Ramp1")
 
     # Memory of the cell state
     for i in range(nbSerial):
@@ -321,7 +326,8 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
         # memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
         # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
         # Old way, kept in case
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" +
+                str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -338,10 +344,10 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
 
     # Multiplication by 10
     tmpNet = getNetId()
-    resistor(tmpNet2, tmpNet, "R3")
+    resistor(tmpNet2, tmpNet, "Ramp0")
     hidNet = getNetId()
     opAmp("Vcm", tmpNet, hidNet)
-    resistor(tmpNet, hidNet, "R4")
+    resistor(tmpNet, hidNet, "Ramp1")
     return hidNet
 
 
@@ -350,14 +356,14 @@ def genPowerNSignals(
 ):  # NOTE : Find out if should be set here or in cadence
     vdc("0", "vdd!", dc="vdd")
     vdc("0", "Vcm", dc="vdd/2")
-    # vdc("0", "V3t", dc=0.55)
-    # vdc("0", "V3s", dc=0.8)
-    # vdc("0", "V2", dc=0.635)
-    # vdc("0", "V1", dc=1.1)
-    vdc("0", "V3t", dc="V3t")
-    vdc("0", "V3s", dc="V3s")
-    vdc("0", "V2", dc="V2")
-    vdc("0", "V1", dc="V1")
+    vdc("0", "V3t", dc=0.55)
+    vdc("0", "V3s", dc=0.8)
+    vdc("0", "V2", dc=0.635)
+    vdc("0", "V1", dc=1.1)
+    # vdc("0", "V3t", dc="V3t")
+    # vdc("0", "V3s", dc="V3s")
+    # vdc("0", "V2", dc="V2")
+    # vdc("0", "V1", dc="V1")
     # Sourcing on Vcm for the vdd/2 is it right?
     vdc("Vcm", "netBias", dc=0.1)
     # needs to be connected to each device (loi des noeuds debilos)
@@ -602,7 +608,8 @@ def main():
                     "The number of hidden states has to be a multiple of SERIAL_SIZE."
                 )
                 exit()
-            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, args.type, weights[i])
+            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size,
+                             args.type, weights[i])
 
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
 
