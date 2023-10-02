@@ -546,7 +546,7 @@ def main():
     parser.add_argument(  # Change to bool ?
         "type",
         default="NP",
-        choices=["NP", "Vanilla", "GRU", "FGR"],
+        choices=["NP", "Vanilla", "FGR"],
         help="Choose which LSTM architecture will be generated.",
     )
     parser.add_argument(
@@ -555,13 +555,6 @@ def main():
         default=1,
         type=int,
         help="Choose the number of inputs for the LSTM. Default : 1",
-    )
-    parser.add_argument(
-        "-no",
-        "--number_output",
-        default=1,
-        type=int,
-        help="Choose the number of outputs for the overall circuit. Default : 1",
     )
     parser.add_argument(
         "-ts",
