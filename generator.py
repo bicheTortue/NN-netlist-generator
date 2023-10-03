@@ -607,6 +607,12 @@ def main():
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
 
     print("\nThe prediction are outputed on", tmpNet)
+    time = 8
+    print(
+        "\nThe prediction are outputed at",
+        (time * args.serial_size + time / 8) * args.time_steps + time / 4,
+        "micro seconds",
+    )
 
     footer(name)
     # End of the file
