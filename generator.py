@@ -318,10 +318,10 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     # Memory of the cell state
     for i in range(nbSerial):
         tmpNet = getNetId()
-        # memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
-        # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
+        memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
+        memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
         # Old way, kept in case
-        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        # memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -495,11 +495,11 @@ def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
             memcell(
                 hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
             )  # Prediction memcells
+            # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
             memcell(
                 hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT"
             )  # Feedback memcells
-            # There are 2 of them not to override the values with-in a single LSTM step
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
             if isFGR:
                 # For the output gate recurrence
@@ -543,10 +543,10 @@ def main():
         default=sys.stdout,
         help="Specify an output file. The name of the file before the extension will be the name of the netlist.",
     )
-    parser.add_argument(  # Change to bool ?
-        "type",
+    parser.add_argument(
+        "--type",
+        choices=["NP", "Vanilla", "FGR", "GRU", "RNN"],
         default="NP",
-        choices=["NP", "Vanilla", "FGR"],
         help="Choose which LSTM architecture will be generated.",
     )
     parser.add_argument(
