@@ -38,8 +38,7 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus +
-              " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -108,8 +107,7 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " +
-        outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -129,8 +127,7 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin +
-        " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -262,8 +259,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -272,8 +268,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -326,8 +321,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
         # memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
         # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
         # Old way, kept in case
-        memcell(postAddNet, oldCellState, "m" +
-                str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
@@ -579,7 +573,7 @@ def main():
 
     args = parser.parse_args()
 
-    if agrs.type == "GRU" and args.serial_size != 1:
+    if args.type == "GRU" and args.serial_size != 1:
         print(
             "The GRU architecture can only work in parallel mode, it cannot be serialized"
         )
@@ -608,8 +602,7 @@ def main():
                     "The number of hidden states has to be a multiple of SERIAL_SIZE."
                 )
                 exit()
-            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size,
-                             args.type, weights[i])
+            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, args.type, weights[i])
 
     genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
 
