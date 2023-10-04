@@ -323,10 +323,10 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     # Memory of the cell state
     for i in range(nbSerial):
         tmpNet = getNetId()
-        memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
+        memcell(postAddNet, tmpNet, "e" + str(i), "nextT")
         memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
-        # Old way, kept in case
-        # memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+    # Old way, kept in case
+    # memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
