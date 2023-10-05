@@ -38,7 +38,13 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + minus + " " + plus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
+
+
+def capacitor(minus, plus, value, _id=count()):
+    if type(value) != str:
+        value = str(value)
+    out.write("C" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -316,12 +322,15 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     resistor(adderNet, postAddNet, "Ramp1")
 
     # Memory of the cell state
+    tmpNet = getNetId()
     for i in range(nbSerial):
-        tmpNet = getNetId()
-        memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "nextT")
-        memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
-        # Old way, kept in case
-        # memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
+    capacitor("0", tmpNet, "1P")
+    buffer(tmpNet, oldCellState)
+
+    # Old way, kept in case
+    # memcell(postAddNet, oldCellState, "m" + str(i) + "p2", "m" + str(i) + "p1")
 
     # tanh activation function
     tmpNet = getNetId()
