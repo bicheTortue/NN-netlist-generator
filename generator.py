@@ -325,6 +325,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
     tmpNet = getNetId()
     for i in range(nbSerial):
         memcell(postAddNet, tmpNet, "m" + str(i) + "p2", "m" + str(i) + "p1")
+        # memcell(postAddNet, tmpNet, "e" + str(i), "nextT")
         # memcell(tmpNet, oldCellState, "nextT", "e" + str(i))
     capacitor("0", tmpNet, "1P")
     buffer(tmpNet, oldCellState)
@@ -506,9 +507,7 @@ def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
             )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
-            memcell(
-                hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT"
-            )  # Feedback memcells
+            memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
             if isFGR:
                 # For the output gate recurrence
