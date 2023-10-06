@@ -356,7 +356,7 @@ def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum)
 
 
 def genPowerNSignals(
-    nbInputs, timeSteps, serialSize
+    nbInputs, timeSteps, serialSize, timeDib
 ):  # NOTE : Find out if should be set here or in cadence
     vdc("0", "vdd!", dc="vdd")
     vdc("0", "Vcm", dc="vdd/2")
@@ -373,7 +373,6 @@ def genPowerNSignals(
     # needs to be connected to each device (loi des noeuds debilos)
     # idc("idc", "vdd!", dc="150u")
 
-    # TODO : Check whether T/20 is enough time for the data to move from one memcell to another
     vpulse(
         "0",
         "nextT",
@@ -381,10 +380,15 @@ def genPowerNSignals(
         td="T*" + str(serialSize),
         pw="T/8",
     )
+    if timeDib:
+        perPred = '"(T*' + str(serialSize) + '+T/8)"'
+    else:
+        perPred = '"(T*' + str(serialSize) + "+T/8)*" + str(timeSteps) + '"'
     vpulse(
         "0",
         "predEn",
-        td='"(T*' + str(serialSize) + "+T/8)*" + str(timeSteps) + '"',
+        td=perPred,
+        per=perPred,
         pw="T/2",
     )  # TODO : probably change pulse width # TODO : Check if necessary to have a small break in between (might hurt other calcs)
     vpulse(
@@ -601,6 +605,7 @@ def main():
 
     for i, layer in enumerate(arch):
         if "Dense" in layer:
+            timeDib = layer[0] == "t"
             nbOut = int(layer.split("(")[1].split(")")[0])
             tmpNet = genDense(tmpNet, nbOut, weights[i])
         elif "LSTM" in layer:
@@ -612,15 +617,26 @@ def main():
                 exit()
             tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, args.type, weights[i])
 
-    genPowerNSignals(args.number_input, args.time_steps, args.serial_size)
+    genPowerNSignals(args.number_input, args.time_steps, args.serial_size, timeDib)
 
     print("\nThe prediction are outputed on", tmpNet)
     time = 8
-    print(
-        "\nThe prediction are outputed at",
-        (time * args.serial_size + time / 8) * args.time_steps + time / 4,
-        "micro seconds",
-    )
+    if timeDib:
+        print(
+            "They are",
+            args.time_steps,
+            "predictions outputed every",
+            time * args.serial_size + time / 8,
+            "micro seconds, starting at",
+            (time * args.serial_size + time / 8) + time / 4,
+            "micro seconds",
+        )
+    else:
+        print(
+            "\nThe prediction are outputed at",
+            (time * args.serial_size + time / 8) * args.time_steps + time / 4,
+            "micro seconds",
+        )
 
     footer(name)
     # End of the file
