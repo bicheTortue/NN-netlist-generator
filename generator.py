@@ -631,7 +631,8 @@ def main():
             time * args.serial_size + time / 8,
             "micro seconds, starting at",
             (time * args.serial_size + time / 8) + time / 4,
-            "micro seconds",
+            "micro seconds. Ending at",
+            (time * args.serial_size + time / 8) * args.time_steps + time / 4,
         )
     else:
         print(
