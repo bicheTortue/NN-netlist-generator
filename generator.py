@@ -597,6 +597,8 @@ def main():
         tmp = pickle.load(file)
     arch, weights = tmp[0], tmp[1::]
 
+    timeDib = False
+
     tmpNet = ["netIn" + str(i) for i in range(args.number_input)]
 
     name = out.name.split(".")[0]
