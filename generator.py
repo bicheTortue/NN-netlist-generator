@@ -38,13 +38,15 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + plus +
+              " " + minus + " " + value + "\n")
 
 
 def capacitor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("C" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
+    out.write("C" + str(next(_id)) + " " + plus +
+              " " + minus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -113,7 +115,8 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " +
+        outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -133,7 +136,8 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin +
+        " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -265,7 +269,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -274,7 +279,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -303,7 +309,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
     return outNets
 
 
-def genPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum):
+def genLSTMPointWise(outputNet, inputNet, cellStateNet, forgetNet, nbSerial, parNum):
     # Multiplication of C and input
     tmpNet = getNetId()
     voltMult(inputNet, cellStateNet, tmpNet)
@@ -422,8 +428,20 @@ def genPowerNSignals(
     # vdc("0", inNet, dc="vdd/2")
     for i in range(nbInputs):
         gndNet = "Vcm"  # Net on the ground side
-        inNet = getNetId()  # Net on the input side
-        for j in range(timeSteps):
+        if timeSteps > 1:
+            inNet = getNetId()  # Net on the input side
+            for j in range(timeSteps):
+                vpulse(
+                    gndNet,
+                    inNet,
+                    val1="in" + str(i) + "step" + str(j),
+                    td='"(T*' + str(serialSize) + "+T/2)*" + str(j) + '"',
+                    pw="T*" + str(serialSize),
+                )
+                gndNet = inNet
+                inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
+        else:
+            inNet = "netIn0"  # Net on the input side
             vpulse(
                 gndNet,
                 inNet,
@@ -431,17 +449,91 @@ def genPowerNSignals(
                 td='"(T*' + str(serialSize) + "+T/2)*" + str(j) + '"',
                 pw="T*" + str(serialSize),
             )
-            gndNet = inNet
-            # needs to be fixed, doesn't work for one time step
-            inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
-    # add small delay to set all memcells
-    # Harder than I thought
 
 
-def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
+def genGRU(listIn, nbHidden,  weights=None):
+    nbIn = len(listIn)
+
+    for i in range(nbHidden):
+        listIn.append("netHid" + str(i))
+
+    predIn = []
+    hidIndex = iter(range(nbHidden))
+
+    updateNets = genXBar(listIn, nbHidden, 1, weights[0])
+    resetNets = genXBar(listIn, nbHidden, 1, weights[0])
+    listIn = listIn[:nbIn]
+    for i in range(nbHidden):
+        resetNet = "resetG" + str(i)
+        tmpNet = getNetId()
+        sigmoid(resetNets[i], tmpNet)
+        buffer(tmpNet, resetNet)
+        listIn.append(getNetId())
+        tmpNet = getNetId()
+        voltMult(resetNet, "netHid"+str(i), tmpNet)
+        tmpNet2 = getNetId()
+        resistor(tmpNet, tmpNet2, "Ramp0")
+        opAmp("Vcm", tmpNet2, listIn[nbIn+i])
+        resistor(tmpNet2, listIn[nbIn+i], "Ramp1")
+    cellNets = genXBar(listIn, nbHidden, 1, weights[0])
+
+    for i in range(nbHidden):  # Also equal to parSize
+        updateNet = "updateG" + str(i)
+        tmpNet = getNetId()
+        sigmoid(updateNets[i], tmpNet)
+        buffer(tmpNet, updateNet)
+
+        tmpNet = getNetId()
+        resistor(updateNet, tmpNet, "Ramp1")
+        opAmp("Vcm", tmpNet, listIn[nbIn+i])
+        resistor(tmpNet, listIn[nbIn+i], "Ramp1")
+        adderNet = getNetId()
+        resistor(updateNet, adderNet, "Ramp1")
+
+        resistor("netBias", adderNet, "Ramp1")
+
+        # opAmp adder
+        nUpdateNet = "nUpdateG" + str(i)
+        opAmp("Vcm", adderNet, nUpdateNet)
+        resistor(adderNet, nUpdateNet, "Ramp1")
+
+        cellNet = "cellG" + str(i)
+        tmpNet = getNetId()
+        tanh(cellNets[i], tmpNet)
+        buffer(tmpNet, cellNet)
+
+        tmpNet = getNetId()
+        voltMult("netHid"+str(i), nUpdateNet, tmpNet)
+        adderNet = getNetId()
+        resistor(tmpNet, adderNet, "Ramp0")
+
+        tmpNet = getNetId()
+        voltMult(cellNet, updateNet, tmpNet)
+        resistor(tmpNet, adderNet, "Ramp0")
+
+        # opAmp adder
+        postAddNet = getNetId()
+        opAmp("Vcm", adderNet, postAddNet)
+        resistor(adderNet, postAddNet, "Ramp1")
+
+        # Memory cells for prediction NN
+        # Memory cells for feedback
+        curIndex = str(next(hidIndex))
+        tmpNet = getNetId()
+        predIn.append(tmpNet)
+        memcell(
+            postAddNet, tmpNet, "m" + str(i) + "p2", "predEn"
+        )  # Prediction memcells
+        # There are 2 of them not to override the values with-in a single LSTM step
+        tmpNet = getNetId()
+        memcell(postAddNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
+        memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
+
+    return predIn
+
+
+def genLSTM(listIn, nbHidden, serialSize, weights=None):
     parSize = nbHidden // serialSize
-    isFGR = typeLSTM == "FGR"
-    isVanilla = typeLSTM == "Vanilla"
 
     for i in range(nbHidden):
         listIn.append("netHid" + str(i))
@@ -495,7 +587,7 @@ def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
         sigmoid(outputNets[i], tmpNet)
         buffer(tmpNet, outputNet)
 
-        hiddenStateNet = genPointWise(
+        hiddenStateNet = genLSTMPointWise(
             outputNet, inputNet, cellStateNet, forgetNet, serialSize, i
         )
 
@@ -511,7 +603,8 @@ def genLSTM(listIn, nbHidden, serialSize, typeLSTM="NP", weights=None):
             )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
+            memcell(hiddenStateNet, tmpNet, "e" +
+                    str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
             if isFGR:
                 # For the output gate recurrence
@@ -556,12 +649,6 @@ def main():
         help="Specify an output file. The name of the file before the extension will be the name of the netlist.",
     )
     parser.add_argument(
-        "--type",
-        choices=["NP", "Vanilla", "FGR", "GRU", "RNN"],
-        default="NP",
-        help="Choose which LSTM architecture will be generated.",
-    )
-    parser.add_argument(
         "-ni",
         "--number_input",
         default=1,
@@ -585,11 +672,6 @@ def main():
 
     args = parser.parse_args()
 
-    if args.type == "GRU" and args.serial_size != 1:
-        print(
-            "The GRU architecture can only work in parallel mode, it cannot be serialized"
-        )
-        exit()
     global out
     out = args.output
 
@@ -617,9 +699,18 @@ def main():
                     "The number of hidden states has to be a multiple of SERIAL_SIZE."
                 )
                 exit()
-            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, args.type, weights[i])
+            tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, weights[i])
+        elif "GRU" in layer:
+            nbHid = int(layer.split("(")[1].split(")")[0])
+            if args.serial_size != 1:
+                print(
+                    "The GRU architecture can only work in parallel mode, it cannot be serialized"
+                )
+                exit()
+            tmpNet = genGRU(tmpNet, nbHid, weights[i])
 
-    genPowerNSignals(args.number_input, args.time_steps, args.serial_size, timeDib)
+    genPowerNSignals(args.number_input, args.time_steps,
+                     args.serial_size, timeDib)
 
     print("\nThe prediction are outputed on", tmpNet)
     time = 8
