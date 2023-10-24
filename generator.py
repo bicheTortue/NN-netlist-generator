@@ -578,19 +578,6 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
             tmpNet = getNetId()
             memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
-            if isFGR:
-                # For the output gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "o" + curIndex, "nextT", "xbarEn")
-                # For the input gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "i" + curIndex, "nextT", "xbarEn")
-                # For the forget gate recurrence
-                tmpNet = getNetId()
-                memcell(hiddenStateNet, tmpNet, "m" + str(i) + "p2", "nextT")
-                memcell(tmpNet, "f" + curIndex, "nextT", "xbarEn")
 
     return predIn
 
@@ -650,7 +637,6 @@ def main():
     with open(args.model[0], "rb") as file:
         tmp = pickle.load(file)
     arch, weights = tmp[0], tmp[1::]
-    print(weights)
 
     timeDib = False
 
