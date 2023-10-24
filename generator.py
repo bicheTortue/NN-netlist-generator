@@ -455,21 +455,21 @@ def genGRU(listIn, nbHidden, weights=None):
     hidIndex = iter(range(nbHidden))
 
     updateNets = genXBar(listIn, nbHidden, 1, weights[0])
-    resetNets = genXBar(listIn, nbHidden, 1, weights[0])
+    resetNets = genXBar(listIn, nbHidden, 1, weights[1])
     listIn = listIn[:nbIn]
     for i in range(nbHidden):
         resetNet = "resetG" + str(i)
         tmpNet = getNetId()
         sigmoid(resetNets[i], tmpNet)
         buffer(tmpNet, resetNet)
-        listIn.append(getNetId())
         tmpNet = getNetId()
         voltMult(resetNet, "netHid" + str(i), tmpNet)
         tmpNet2 = getNetId()
         resistor(tmpNet, tmpNet2, "Ramp0")
+        listIn.append(getNetId())
         opAmp("Vcm", tmpNet2, listIn[nbIn + i])
         resistor(tmpNet2, listIn[nbIn + i], "Ramp1")
-    cellNets = genXBar(listIn, nbHidden, 1, weights[0])
+    cellNets = genXBar(listIn, nbHidden, 1, weights[2])
 
     for i in range(nbHidden):  # Also equal to parSize
         updateNet = "updateG" + str(i)
@@ -478,11 +478,13 @@ def genGRU(listIn, nbHidden, weights=None):
         buffer(tmpNet, updateNet)
 
         tmpNet = getNetId()
+        tmpNet2 = getNetId()
         resistor(updateNet, tmpNet, "Ramp1")
-        opAmp("Vcm", tmpNet, listIn[nbIn + i])
-        resistor(tmpNet, listIn[nbIn + i], "Ramp1")
+        opAmp("Vcm", tmpNet, tmpNet2)
+        resistor(tmpNet, tmpNet2, "Ramp1")
+
         adderNet = getNetId()
-        resistor(updateNet, adderNet, "Ramp1")
+        resistor(tmpNet2, adderNet, "Ramp1")
 
         resistor("netBias", adderNet, "Ramp1")
 
