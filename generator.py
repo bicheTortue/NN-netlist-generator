@@ -38,15 +38,13 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + plus +
-              " " + minus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
 
 
 def capacitor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("C" + str(next(_id)) + " " + plus +
-              " " + minus + " " + value + "\n")
+    out.write("C" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -115,8 +113,7 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " +
-        outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -136,8 +133,7 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin +
-        " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -269,8 +265,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -279,8 +274,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -451,7 +445,7 @@ def genPowerNSignals(
             )
 
 
-def genGRU(listIn, nbHidden,  weights=None):
+def genGRU(listIn, nbHidden, weights=None):
     nbIn = len(listIn)
 
     for i in range(nbHidden):
@@ -470,11 +464,11 @@ def genGRU(listIn, nbHidden,  weights=None):
         buffer(tmpNet, resetNet)
         listIn.append(getNetId())
         tmpNet = getNetId()
-        voltMult(resetNet, "netHid"+str(i), tmpNet)
+        voltMult(resetNet, "netHid" + str(i), tmpNet)
         tmpNet2 = getNetId()
         resistor(tmpNet, tmpNet2, "Ramp0")
-        opAmp("Vcm", tmpNet2, listIn[nbIn+i])
-        resistor(tmpNet2, listIn[nbIn+i], "Ramp1")
+        opAmp("Vcm", tmpNet2, listIn[nbIn + i])
+        resistor(tmpNet2, listIn[nbIn + i], "Ramp1")
     cellNets = genXBar(listIn, nbHidden, 1, weights[0])
 
     for i in range(nbHidden):  # Also equal to parSize
@@ -485,8 +479,8 @@ def genGRU(listIn, nbHidden,  weights=None):
 
         tmpNet = getNetId()
         resistor(updateNet, tmpNet, "Ramp1")
-        opAmp("Vcm", tmpNet, listIn[nbIn+i])
-        resistor(tmpNet, listIn[nbIn+i], "Ramp1")
+        opAmp("Vcm", tmpNet, listIn[nbIn + i])
+        resistor(tmpNet, listIn[nbIn + i], "Ramp1")
         adderNet = getNetId()
         resistor(updateNet, adderNet, "Ramp1")
 
@@ -503,7 +497,7 @@ def genGRU(listIn, nbHidden,  weights=None):
         buffer(tmpNet, cellNet)
 
         tmpNet = getNetId()
-        voltMult("netHid"+str(i), nUpdateNet, tmpNet)
+        voltMult("netHid" + str(i), nUpdateNet, tmpNet)
         adderNet = getNetId()
         resistor(tmpNet, adderNet, "Ramp0")
 
@@ -537,36 +531,22 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
 
     for i in range(nbHidden):
         listIn.append("netHid" + str(i))
-    if isFGR:
-        listFGR = []
-        listFGR.append(["o" + str(i) for i in range(nbHidden)])
-        listFGR.append(["i" + str(i) for i in range(nbHidden)])
-        listFGR.append(["f" + str(i) for i in range(nbHidden)])
 
     predIn = []
     hidIndex = iter(range(nbHidden))
 
     # Generate part of cell state gate
     cellStateNets = genXBar(listIn, nbHidden, serialSize, weights[2])
-    if isFGR:
-        for l in listFGR:
-            listIn.extend(l)
     # Generate part of input gate
-    inputNets = genXBar(
-        listIn, nbHidden, serialSize, weights[0], peephole=isFGR or isVanilla
-    )
+    inputNets = genXBar(listIn, nbHidden, serialSize, weights[0])
     # Generate part of forget gate
-    forgetNets = genXBar(
-        listIn, nbHidden, serialSize, weights[1], peephole=isFGR or isVanilla
-    )
+    forgetNets = genXBar(listIn, nbHidden, serialSize, weights[1])
     # Generate part of output gate
     outputNets = genXBar(
         listIn,
         nbHidden,
         serialSize,
         weights[3],
-        peephole=isFGR or isVanilla,
-        isOld=not isVanilla,
     )
 
     for i in range(parSize):  # Also equal to parSize
@@ -603,8 +583,7 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
             )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "e" +
-                    str(i), "nextT")  # Feedback memcells
+            memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
             if isFGR:
                 # For the output gate recurrence
@@ -678,6 +657,7 @@ def main():
     with open(args.model[0], "rb") as file:
         tmp = pickle.load(file)
     arch, weights = tmp[0], tmp[1::]
+    print(weights)
 
     timeDib = False
 
@@ -709,8 +689,7 @@ def main():
                 exit()
             tmpNet = genGRU(tmpNet, nbHid, weights[i])
 
-    genPowerNSignals(args.number_input, args.time_steps,
-                     args.serial_size, timeDib)
+    genPowerNSignals(args.number_input, args.time_steps, args.serial_size, timeDib)
 
     print("\nThe prediction are outputed on", tmpNet)
     time = 8
