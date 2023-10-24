@@ -19,7 +19,7 @@ def getNetId(_netCount=count()):
 
 def wei2res(w):
     Rpos = (w + 1 - np.sqrt(w**2 + 1)) * Rf / w
-    Rpos = float("%.2g" % Rpos)
+    Rpos = float("%.3g" % Rpos)
     Rneg = 2 * Rf - Rpos
     return (Rpos, Rneg)
 
@@ -447,6 +447,7 @@ def genPowerNSignals(
 
 def genGRU(listIn, nbHidden, weights=None):
     nbIn = len(listIn)
+    vdc("Vcm", "netInv", dc=0.05)
 
     for i in range(nbHidden):
         listIn.append("netHid" + str(i))
@@ -478,20 +479,10 @@ def genGRU(listIn, nbHidden, weights=None):
         buffer(tmpNet, updateNet)
 
         tmpNet = getNetId()
-        tmpNet2 = getNetId()
-        resistor(updateNet, tmpNet, "Ramp1")
-        opAmp("Vcm", tmpNet, tmpNet2)
-        resistor(tmpNet, tmpNet2, "Ramp1")
-
-        adderNet = getNetId()
-        resistor(tmpNet2, adderNet, "Ramp1")
-
-        resistor("netBias", adderNet, "Ramp1")
-
-        # opAmp adder
         nUpdateNet = "nUpdateG" + str(i)
-        opAmp("Vcm", adderNet, nUpdateNet)
-        resistor(adderNet, nUpdateNet, "Ramp1")
+        resistor(updateNet, tmpNet, "Ramp1")
+        opAmp("netInv", tmpNet, nUpdateNet)
+        resistor(tmpNet, nUpdateNet, "Ramp1")
 
         cellNet = "cellG" + str(i)
         tmpNet = getNetId()
