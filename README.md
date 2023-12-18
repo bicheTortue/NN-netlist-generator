@@ -16,10 +16,9 @@ This is a python script that generates a SPICE netlist to be imported in Cadence
 
 ## Usage
 
-    ```bash
-    usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-ts TIME_STEPS] [-ns SERIAL_SIZE]
-
-    ```
+```bash
+usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-ts TIME_STEPS] [-ns SERIAL_SIZE]
+```
 
 ### Arguments
 
