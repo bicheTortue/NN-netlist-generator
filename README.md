@@ -48,12 +48,12 @@ The script supports the following Neural Network layers :
 
 ## Importing
 
-    Importing the netlist in Cadence's Virtuoso requires the following steps :
+Importing the netlist in Cadence's Virtuoso requires the following steps :
 
-    - File
+- File
 
-    TODO : check
+TODO : check
 
 ## License
 
-    This project is licensed under the General Public License, version 3.0 or later - see the [COPYING](./COPYING) file for details.
+This project is licensed under the General Public License, version 3.0 or later - see the [COPYING](./COPYING) file for details.
