@@ -24,8 +24,8 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 
 | Short | Long       | Default  | Description                                                                                                                   |
 |:-----:|:----------:|:--------:|-------------------------------------------------------------------------------------------------------------------------------|
-| `-h`  | `--help`   |          | Show help message and exit                                                                                                    |
-| `-m`  | `--model`  |          | Specify the file containing the model and its weights.                                                                        |
+|`-h`| `--help`   |          | Show help message and exit                                                                                                    |
+|`-m`| `--model`  |          | Specify the file containing the model and its weights.                                                                        |
 | `-o`  | `--output` | <stdout> | Specify the output file. The name of the file before the extension will be the name of the netlist.                           |
 |  `-ni`     |  `--number-input`          |   1    | Sets the number of inputs for the Neural Network. |
 |  `-ts`     |  `--time-steps`          |   1    | Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. |
