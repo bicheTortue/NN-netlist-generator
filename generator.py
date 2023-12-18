@@ -38,13 +38,15 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + plus +
+              " " + minus + " " + value + "\n")
 
 
 def capacitor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("C" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
+    out.write("C" + str(next(_id)) + " " + plus +
+              " " + minus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -113,7 +115,8 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " +
+        outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -133,7 +136,8 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin +
+        " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -265,7 +269,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -274,7 +279,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(
+                    next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -576,7 +582,8 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
             )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
+            memcell(hiddenStateNet, tmpNet, "e" +
+                    str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
 
     return predIn
@@ -589,7 +596,8 @@ def genDense(lIn, nbOutputs, weights=None):
 def main():
     parser = argparse.ArgumentParser(
         prog="Analog LSTM Generator",
-        description="This program is used to generate spice netlists to be used in Cadence's virtuoso. It sets all the memristors values from the weights.",
+        description="This python script that generates a SPICE netlist to be imported in Cadence's Virtuoso.",
+        # formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
         "-m",
@@ -597,7 +605,7 @@ def main():
         nargs=1,
         type=str,
         default=None,
-        help="Specify a file containing the model and its weights.",
+        help="Specify the file containing the model and its weights.",
     )
     parser.add_argument(
         "-o",
@@ -605,28 +613,28 @@ def main():
         nargs="?",
         type=argparse.FileType("w"),
         default=sys.stdout,
-        help="Specify an output file. The name of the file before the extension will be the name of the netlist.",
+        help="Specify the output file. The name of the file before the extension will be the name of the netlist. (default : stdout)",
     )
     parser.add_argument(
         "-ni",
-        "--number_input",
+        "--number-input",
         default=1,
         type=int,
-        help="Choose the number of inputs for the LSTM. Default : 1",
+        help="Sets the number of inputs for the Neural Network. (default : %(default)s)",
     )
     parser.add_argument(
         "-ts",
-        "--time_steps",
+        "--time-steps",
         default=1,
         type=int,
-        help="Choose the number of time steps the input of the LSTM has. Default : 1",
+        help="Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. (default : %(default)s)",
     )
     parser.add_argument(
         "-ns",
-        "--serial_size",
+        "--serial-size",
         default=4,
         type=int,
-        help="Choose the amount of serial channel for the LSTM. An LSTM time step will become SERIAL_SIZE times longer. Default : 4 (This value has to divide the number of hidden states)",
+        help="Sets the amount of serial channel for the Neural Network. (default : %(default)s)",
     )
 
     args = parser.parse_args()
@@ -668,7 +676,8 @@ def main():
                 exit()
             tmpNet = genGRU(tmpNet, nbHid, weights[i])
 
-    genPowerNSignals(args.number_input, args.time_steps, args.serial_size, timeDib)
+    genPowerNSignals(args.number_input, args.time_steps,
+                     args.serial_size, timeDib)
 
     print("\nThe prediction are outputed on", tmpNet)
     time = 8
