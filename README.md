@@ -16,6 +16,13 @@ This is a python script that generates a SPICE netlist to be imported in Cadence
 
 ## Usage
 
+    ```bash
+    usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-ts TIME_STEPS] [-ns SERIAL_SIZE]
+
+    ```
+
+### Arguments
+
     | Short | Long       | Default  | Description                                                                                                                   |
     |-------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
     | `-h`  | `--help`   |          | Show help message and exit                                                                                                    |
@@ -23,6 +30,7 @@ This is a python script that generates a SPICE netlist to be imported in Cadence
     | `-o`  | `--output` | <stdout> | Specify the output file. The name of the file before the extension will be the name of the netlist.                           |
     |  `-ni`     |  `--number-input`          |   1    | Sets the number of inputs for the Neural Network. |
     |  `-ts`     |  `--time-steps`          |   1    | Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. |
+    |  `-ns`     |  `--serial-size`          |   1    | Sets the amount of serial channel for the Neural Network. |
 
 ## Features
 
