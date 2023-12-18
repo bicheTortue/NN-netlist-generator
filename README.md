@@ -22,26 +22,26 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 
 ### Arguments
 
-    | Short | Long       | Default  | Description                                                                                                                   |
-    |-------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-    | `-h`  | `--help`   |          | Show help message and exit                                                                                                    |
-    | `-m`  | `--model`  |          | Specify the file containing the model and its weights.                                                                        |
-    | `-o`  | `--output` | <stdout> | Specify the output file. The name of the file before the extension will be the name of the netlist.                           |
-    |  `-ni`     |  `--number-input`          |   1    | Sets the number of inputs for the Neural Network. |
-    |  `-ts`     |  `--time-steps`          |   1    | Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. |
-    |  `-ns`     |  `--serial-size`          |   1    | Sets the amount of serial channel for the Neural Network. |
+| Short | Long       | Default  | Description                                                                                                                   |
+|-------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `-h`  | `--help`   |          | Show help message and exit                                                                                                    |
+| `-m`  | `--model`  |          | Specify the file containing the model and its weights.                                                                        |
+| `-o`  | `--output` | <stdout> | Specify the output file. The name of the file before the extension will be the name of the netlist.                           |
+|  `-ni`     |  `--number-input`          |   1    | Sets the number of inputs for the Neural Network. |
+|  `-ts`     |  `--time-steps`          |   1    | Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. |
+|  `-ns`     |  `--serial-size`          |   1    | Sets the amount of serial channel for the Neural Network. |
 
 ## Features
 
-    It generates the netlist based on a file (generated using [the other repo](../LSTM-weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](todo).
+It generates the netlist based on a file (generated using [the other repo](../LSTM-weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](todo).
 
-    The script supports the following Neural Network layers :
+The script supports the following Neural Network layers :
 
-    - Dense layers
+- Dense layers
 
-    - Time distributed dense layers
+- Time distributed dense layers
 
-    - LSTM layers
+- LSTM layers
 
 - GRU layers (WIP)
 
