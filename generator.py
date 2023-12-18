@@ -632,7 +632,7 @@ def main():
     parser.add_argument(
         "-ns",
         "--serial-size",
-        default=4,
+        default=1,
         type=int,
         help="Sets the amount of serial channel for the Neural Network. (default : %(default)s)",
     )
