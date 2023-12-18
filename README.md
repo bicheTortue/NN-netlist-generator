@@ -23,7 +23,7 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 ### Arguments
 
 | Short | Long       | Default  | Description                                                                                                                   |
-|-------|------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+|:-----:|:----------:|:--------:|-------------------------------------------------------------------------------------------------------------------------------|
 | `-h`  | `--help`   |          | Show help message and exit                                                                                                    |
 | `-m`  | `--model`  |          | Specify the file containing the model and its weights.                                                                        |
 | `-o`  | `--output` | <stdout> | Specify the output file. The name of the file before the extension will be the name of the netlist.                           |
