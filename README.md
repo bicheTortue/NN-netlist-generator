@@ -22,7 +22,7 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 
 ### Arguments
 
-| Short | Long       | Default  | Description                                                                                                                   |
+| Short | Long | Default | Description |
 |:-----:|:----------:|:--------:|-------------------------------------------------------------------------------------------------------------------------------|
 |`-h`|`--help`||Show help message and exit.|
 |`-m`|`--model`||Specify the file containing the model and its weights.|
@@ -33,7 +33,7 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 
 ## Features
 
-It generates the netlist based on a file (generated using the scripts available [here](../../../LSTM-weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](https://github.com/bicheTortue/MSc-thesis/releases/download/Final/thesis.pdf).
+It generates the netlist based on a file (generated using the scripts available [here](../../../weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](https://github.com/bicheTortue/MSc-thesis/releases/download/Final/thesis.pdf).
 
 The script supports the following Neural Network layers :
 
