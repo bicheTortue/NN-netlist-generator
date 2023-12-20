@@ -56,7 +56,7 @@ Importing the netlist in Cadence's Virtuoso requires the following steps :
 
 - From the `Spice In` window select `load` from the bottom of the window.
 
-- Select the `[spiceIn.params](../../../cadence-files/spiceIn.params)` file and select `open`.
+- Select the [`spiceIn.params`](../../../cadence-files/spiceIn.params) file and select `open`.
 
 - Choose your netlist from the `Netlist File` file picker.
 
