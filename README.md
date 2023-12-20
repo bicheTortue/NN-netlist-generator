@@ -33,7 +33,7 @@ usage: Analog LSTM Generator [-h] [-m MODEL] [-o [OUTPUT]] [-ni NUMBER_INPUT] [-
 
 ## Features
 
-It generates the netlist based on a file (generated using [the other repo](../../../LSTM-weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](todo).
+It generates the netlist based on a file (generated using the scripts available [here](../../../LSTM-weights-generator)) containing the Neural Network configuration and the weights associated as described in the [thesis](todo).
 
 The script supports the following Neural Network layers :
 
@@ -56,11 +56,11 @@ Importing the netlist in Cadence's Virtuoso requires the following steps :
 
 - From the `Spice In` window select `load` from the bottom of the window.
 
-- Select the [`spiceIn.params`](../../../cadence-files/blob/main/spiceIn.params) file and select `open`.
+- Select the [`spiceIn.params`](../../../cadence-files/blob/main/spiceIn.params) file from the [Cadence files](../../../cadence-files) repo and select `open`.
 
 - Choose your netlist from the `Netlist File` file picker.
 
-- From the `Output` tab, select the `Output Library` where you want the schematic to be.
+- From the `Output` tab, select the `Output Library` which the schematic will be part of.
 
 - Then select `OK` at the bottom of the window.
 
