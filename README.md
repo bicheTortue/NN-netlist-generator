@@ -50,9 +50,19 @@ The script supports the following Neural Network layers :
 
 Importing the netlist in Cadence's Virtuoso requires the following steps :
 
-- File
+- From the console window, select `File`.
 
-TODO : check
+- Then select `Import`, then `Spice...`.
+
+- From the `Spice In` window select `load` from the bottom of the window.
+
+- Select the `[spiceIn.params](../../../cadence-files/spiceIn.params)` file and select `open`.
+
+- Choose your netlist from the `Netlist File` file picker.
+
+- From the `Output` tab, select the `Output Library` where you want the schematic to be.
+
+- Then select `OK` at the bottom of the window.
 
 ## License
 

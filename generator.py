@@ -38,15 +38,13 @@ def footer(module_name):
 def resistor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("R" + str(next(_id)) + " " + plus +
-              " " + minus + " " + value + "\n")
+    out.write("R" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
 
 
 def capacitor(minus, plus, value, _id=count()):
     if type(value) != str:
         value = str(value)
-    out.write("C" + str(next(_id)) + " " + plus +
-              " " + minus + " " + value + "\n")
+    out.write("C" + str(next(_id)) + " " + plus + " " + minus + " " + value + "\n")
 
 
 def MOSFET(tType, drain, gate, source, bulk, _id=count()):
@@ -115,8 +113,7 @@ def voltMult(in1, in2, outPin, _id=count()):
 
 def opAmp(pin, nin, outPin, _id=count()):
     out.write(
-        "XopAmp" + str(next(_id)) + " " + nin + " " +
-        outPin + " " + pin + " opAmp\n"
+        "XopAmp" + str(next(_id)) + " " + nin + " " + outPin + " " + pin + " opAmp\n"
     )
 
 
@@ -136,8 +133,7 @@ def buffer(inPin, outPin, _id=count()):
 
 def inverter(inPin, outPin, _id=count()):
     out.write(
-        "Xinverter" + str(next(_id)) + " 0 " + inPin +
-        " " + outPin + " vdd! inverter\n"
+        "Xinverter" + str(next(_id)) + " 0 " + inPin + " " + outPin + " vdd! inverter\n"
     )
 
 
@@ -269,8 +265,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                 negWeight = getNetId()
             # Setting the input weights
             for netIn in lIn:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 # TODO : be able to choose between one or two opAmp/Weights
                 resistor(netIn, posWeight, Rp)
                 resistor(netIn, negWeight, Rm)
@@ -279,8 +274,7 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
             resistor("netBias", posWeight, Rp)
             resistor("netBias", negWeight, Rm)
             if peephole:
-                Rp, Rm = (100, 100) if weights is None else wei2res(
-                    next(weights))
+                Rp, Rm = (100, 100) if weights is None else wei2res(next(weights))
                 if isOld:
                     resistor("cellStateOld" + str(j), posWeight, Rp)
                     resistor("cellStateOld" + str(j), negWeight, Rm)
@@ -582,8 +576,7 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
             )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
-            memcell(hiddenStateNet, tmpNet, "e" +
-                    str(i), "nextT")  # Feedback memcells
+            memcell(hiddenStateNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
             memcell(tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
 
     return predIn
@@ -676,8 +669,7 @@ def main():
                 exit()
             tmpNet = genGRU(tmpNet, nbHid, weights[i])
 
-    genPowerNSignals(args.number_input, args.time_steps,
-                     args.serial_size, timeDib)
+    genPowerNSignals(args.number_input, args.time_steps, args.serial_size, timeDib)
 
     print("\nThe prediction are outputed on", tmpNet)
     time = 8
