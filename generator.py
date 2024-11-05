@@ -61,8 +61,8 @@ def genXBar(lIn, nbOutput, serialSize, weights=None, peephole=False, isOld=True)
                     resistor(out, "cellStateCur" + str(j), posWeight, Rp)
                     resistor(out, "cellStateCur" + str(j), negWeight, Rm)
             if (
-                serialSize > 1
-            ):  # The CMOS switches are not necessary if the system is fully parallelized
+                    serialSize > 1
+                    ):  # The CMOS switches are not necessary if the system is fully parallelized
                 # Positive line CMOS Switch
                 MOSFET(out, nmos, posWeight, "e" + str(i), posCurOut, posCurOut)
                 MOSFET(out, pmos, posCurOut, "ne" + str(i), posWeight, posWeight)
@@ -144,57 +144,57 @@ def genPowerNSignals(nbInputs, timeSteps, serialSize, timeDib):
     vdc(out, "Vcm", "netBias", dc=0.1)
 
     vpulse(
-        out,
-        "0",
-        "nextT",
-        per="T*" + str(serialSize) + "+T/8",
-        td="T*" + str(serialSize),
-        pw="T/8",
-    )
+            out,
+            "0",
+            "nextT",
+            per="T*" + str(serialSize) + "+T/8",
+            td="T*" + str(serialSize),
+            pw="T/8",
+            )
     if timeDib:
         perPred = '"(T*' + str(serialSize) + '+T/8)"'
     else:
         perPred = '"(T*' + str(serialSize) + "+T/8)*" + str(timeSteps) + '"'
     vpulse(
-        out,
-        "0",
-        "predEn",
-        td=perPred,
-        per=perPred,
-        pw="T/2",
-    )
+            out,
+            "0",
+            "predEn",
+            td=perPred,
+            per=perPred,
+            pw="T/2",
+            )
     vpulse(
-        out,
-        "0",
-        "xbarEn",
-        per="T*" + str(serialSize) + "+T/8",
-        pw="T*" + str(serialSize),
-    )
+            out,
+            "0",
+            "xbarEn",
+            per="T*" + str(serialSize) + "+T/8",
+            pw="T*" + str(serialSize),
+            )
     for i in range(serialSize):
         vpulse(
-            out,
-            "0",
-            "m" + str(i) + "p1",
-            per="T*" + str(serialSize) + "+T/8",
-            td=str(i) + "*T",
-            pw="T/2-T/16",
-        )
+                out,
+                "0",
+                "m" + str(i) + "p1",
+                per="T*" + str(serialSize) + "+T/8",
+                td=str(i) + "*T",
+                pw="T/2-T/16",
+                )
         vpulse(
-            out,
-            "0",
-            "m" + str(i) + "p2",
-            per="T*" + str(serialSize) + "+T/8",
-            td=str(i) + "*T+T/2+T/16",
-            pw="T/2-T/16",
-        )
+                out,
+                "0",
+                "m" + str(i) + "p2",
+                per="T*" + str(serialSize) + "+T/8",
+                td=str(i) + "*T+T/2+T/16",
+                pw="T/2-T/16",
+                )
         vpulse(
-            out,
-            "0",
-            "e" + str(i),
-            per="T*" + str(serialSize) + "+T/8",
-            td=str(i) + "*T",
-            pw="T",
-        )
+                out,
+                "0",
+                "e" + str(i),
+                per="T*" + str(serialSize) + "+T/8",
+                td=str(i) + "*T",
+                pw="T",
+                )
         inverter(out, "e" + str(i), "ne" + str(i))
     for i in range(nbInputs):
         gndNet = "Vcm"  # Net on the ground side
@@ -202,25 +202,25 @@ def genPowerNSignals(nbInputs, timeSteps, serialSize, timeDib):
             inNet = getNetId()  # Net on the input side
             for j in range(timeSteps):
                 vpulse(
+                        out,
+                        gndNet,
+                        inNet,
+                        val1="in" + str(i) + "step" + str(j),
+                        td='"(T*' + str(serialSize) + "+T/2)*" + str(j) + '"',
+                        pw="T*" + str(serialSize),
+                        )
+                gndNet = inNet
+                inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
+        else:
+            inNet = "netIn0"  # Net on the input side
+            vpulse(
                     out,
                     gndNet,
                     inNet,
                     val1="in" + str(i) + "step" + str(j),
                     td='"(T*' + str(serialSize) + "+T/2)*" + str(j) + '"',
                     pw="T*" + str(serialSize),
-                )
-                gndNet = inNet
-                inNet = "netIn" + str(i) if j == timeSteps - 2 else getNetId()
-        else:
-            inNet = "netIn0"  # Net on the input side
-            vpulse(
-                out,
-                gndNet,
-                inNet,
-                val1="in" + str(i) + "step" + str(j),
-                td='"(T*' + str(serialSize) + "+T/2)*" + str(j) + '"',
-                pw="T*" + str(serialSize),
-            )
+                    )
 
 
 def genGRU(listIn, nbHidden, weights=None):
@@ -287,8 +287,8 @@ def genGRU(listIn, nbHidden, weights=None):
         tmpNet = getNetId()
         predIn.append(tmpNet)
         memcell(
-            out, postAddNet, tmpNet, "m" + str(i) + "p2", "predEn"
-        )  # Prediction memcells
+                out, postAddNet, tmpNet, "m" + str(i) + "p2", "predEn"
+                )  # Prediction memcells
         # There are 2 of them not to override the values with-in a single LSTM step
         tmpNet = getNetId()
         memcell(out, postAddNet, tmpNet, "e" + str(i), "nextT")  # Feedback memcells
@@ -314,11 +314,11 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
     forgetNets = genXBar(listIn, nbHidden, serialSize, weights[1])
     # Generate part of output gate
     outputNets = genXBar(
-        listIn,
-        nbHidden,
-        serialSize,
-        weights[3],
-    )
+            listIn,
+            nbHidden,
+            serialSize,
+            weights[3],
+            )
 
     for i in range(parSize):  # Also equal to parSize
         outputNet = "outputG" + str(i)
@@ -339,8 +339,8 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
         buffer(out, tmpNet, outputNet)
 
         hiddenStateNet = genLSTMPointWise(
-            outputNet, inputNet, cellStateNet, forgetNet, serialSize, i
-        )
+                outputNet, inputNet, cellStateNet, forgetNet, serialSize, i
+                )
 
         # Memory cells for prediction NN
         # Memory cells for feedback
@@ -350,13 +350,13 @@ def genLSTM(listIn, nbHidden, serialSize, weights=None):
             tmpNet = getNetId()
             predIn.append(tmpNet)
             memcell(
-                out, hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
-            )  # Prediction memcells
+                    out, hiddenStateNet, tmpNet, "m" + str(i) + "p2", "predEn"
+                    )  # Prediction memcells
             # There are 2 of them not to override the values with-in a single LSTM step
             tmpNet = getNetId()
             memcell(
-                out, hiddenStateNet, tmpNet, "e" + str(i), "nextT"
-            )  # Feedback memcells
+                    out, hiddenStateNet, tmpNet, "e" + str(i), "nextT"
+                    )  # Feedback memcells
             memcell(out, tmpNet, "netHid" + curIndex, "nextT", "xbarEn")
 
     return predIn
@@ -368,46 +368,50 @@ def genDense(lIn, nbOutputs, weights=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="Analog LSTM Generator",
-        description="This python script that generates a SPICE netlist to be imported in Cadence's Virtuoso.",
-    )
+            prog="Analog LSTM Generator",
+            description="This python script that generates a SPICE netlist to be imported in Cadence's Virtuoso.",
+            )
     parser.add_argument(
-        "-m",
-        "--model",
-        nargs=1,
-        type=str,
-        default=None,
-        help="Specify the file containing the model and its weights.",
-    )
+            "-m",
+            "--model",
+            nargs=1,
+            type=str,
+            default=None,
+            help="Specify the file containing the model and its weights.",
+            )
     parser.add_argument(
-        "-o",
-        "--output",
-        nargs="?",
-        type=argparse.FileType("w"),
-        default=sys.stdout,
-        help="Specify the output file. The name of the file before the extension will be the name of the netlist. (default : stdout)",
-    )
+            "-o",
+            "--output",
+            nargs="?",
+            type=argparse.FileType("w"),
+            default=sys.stdout,
+            help="Specify the output file. The name of the file before the extension will be the name of the netlist. (default : stdout)",
+            )
     parser.add_argument(
-        "-ni",
-        "--number-input",
-        default=1,
-        type=int,
-        help="Sets the number of inputs for the Neural Network. (default : %(default)s)",
-    )
+            "-ni",
+            "--number-input",
+            default=1,
+            type=int,
+            help="Sets the number of inputs for the Neural Network. (default : %(default)s)",
+            )
     parser.add_argument(
-        "-ts",
-        "--time-steps",
-        default=1,
-        type=int,
-        help="Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. (default : %(default)s)",
-    )
+            "-ts",
+            "--time-steps",
+            default=1,
+            type=int,
+            help="Sets the number of time steps the input of the Recurrent Neural Network has. Only relevant if using Recurrent Neural Network. (default : %(default)s)",
+            )
     parser.add_argument(
-        "-ns",
-        "--serial-size",
-        default=1,
-        type=int,
-        help="Sets the amount of serial channel for the Neural Network. (default : %(default)s)",
-    )
+            "-ns",
+            "--serial-size",
+            default=1,
+            type=int,
+            help="Sets the amount of serial channel for the Neural Network. (default : %(default)s)",
+            )
+    parser.add_argument(
+            default=1,
+            type=int,
+            )
 
     args = parser.parse_args()
 
@@ -417,8 +421,6 @@ def main():
     with open(args.model[0], "rb") as file:
         tmp = pickle.load(file)
     arch, weights = tmp[0], tmp[1::]
-
-    timeDib = False
 
     tmpNet = ["netIn" + str(i) for i in range(args.number_input)]
 
@@ -435,16 +437,16 @@ def main():
             nbHid = int(layer.split("(")[1].split(")")[0])
             if nbHid % args.serial_size != 0:
                 print(
-                    "The number of hidden states has to be a multiple of SERIAL_SIZE."
-                )
+                        "The number of hidden states has to be a multiple of SERIAL_SIZE."
+                        )
                 exit()
             tmpNet = genLSTM(tmpNet, nbHid, args.serial_size, weights[i])
         elif "GRU" in layer:
             nbHid = int(layer.split("(")[1].split(")")[0])
             if args.serial_size != 1:
                 print(
-                    "The GRU architecture can only work in parallel mode, it cannot be serialized"
-                )
+                        "The GRU architecture can only work in parallel mode, it cannot be serialized"
+                        )
                 exit()
             tmpNet = genGRU(tmpNet, nbHid, weights[i])
 
@@ -454,21 +456,21 @@ def main():
     time = 8
     if timeDib:
         print(
-            "They are",
-            args.time_steps,
-            "predictions outputed every",
-            time * args.serial_size + time / 8,
-            "micro seconds, starting at",
-            (time * args.serial_size + time / 8) + time / 4,
-            "micro seconds. Ending at",
-            (time * args.serial_size + time / 8) * args.time_steps + time / 4,
-        )
+                "They are",
+                args.time_steps,
+                "predictions outputed every",
+                time * args.serial_size + time / 8,
+                "micro seconds, starting at",
+                (time * args.serial_size + time / 8) + time / 4,
+                "micro seconds. Ending at",
+                (time * args.serial_size + time / 8) * args.time_steps + time / 4,
+                )
     else:
         print(
-            "\nThe prediction are outputed at",
-            (time * args.serial_size + time / 8) * args.time_steps + time / 4,
-            "micro seconds",
-        )
+                "\nThe prediction are outputed at",
+                (time * args.serial_size + time / 8) * args.time_steps + time / 4,
+                "micro seconds",
+                )
 
     footer(name)
     # End of the file
